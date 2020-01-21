@@ -9,8 +9,10 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
 
-    <StackPanel Orientation="Vertical">
-        <Button x:Name="download_start" Width="100" Height="100"  Content="Download" Click="Download_start_Click"/>
+    <StackPanel Orientation="Horizontal">
+        <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click"/>
+        <Button x:Name="button_stop" Margin="8" Content="Stop" Click="button_stop_Click"/>
+        <Button x:Name="button_setting" Margin="8" Content="Setting"/>
         <TextBlock x:Name="download_status"/>
     </StackPanel>
 </Page>
