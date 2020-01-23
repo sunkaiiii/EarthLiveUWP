@@ -6,10 +6,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Graphics.Imaging;
 using Windows.Storage;
+using Windows.Storage.Streams;
+using Windows.System.UserProfile;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace EarthLiveUWP
@@ -88,7 +92,7 @@ namespace EarthLiveUWP
 
         private async Task<WriteableBitmap> JoinImageAsync()
         {
-            var writeablebmp = new WriteableBitmap(2000,2000);
+            var writeablebmp = new WriteableBitmap(550*Config.size,550*Config.size);
             for (int ii = 0; ii < Config.size; ii++)
             {
                 for (int jj = 0; jj < Config.size; jj++)
@@ -176,23 +180,92 @@ namespace EarthLiveUWP
             //    Directory.CreateDirectory(Config.image_folder);
             //}
         }
-        public async Task UpdateImage(CancellationTokenSource _source, Windows.UI.Xaml.Controls.Image imageView)
+        public async Task UpdateImage(CancellationTokenSource _source, Windows.UI.Xaml.Controls.Image imageView=null)
         {
             InitFolder();
             if (await GetImageID(_source) == -1)
             {
                 return;
             }
-            //if (imageID.Equals(last_imageID))
-            //{
-            //    return;
-            //}
+            if (imageID.Equals(last_imageID))
+            {
+                return;
+            }
             if (await SaveImage(_source) == 0)
             {
-                imageView.Source= await JoinImageAsync();
+                var bitmap = await JoinImageAsync();
+                if(imageView!=null)
+                {
+                    imageView.Source = bitmap;
+                }
+                var storageFile = await WriteableBitmapToStorageFile(bitmap, FileFormat.Jpeg);
+                if (UserProfilePersonalizationSettings.IsSupported())
+                {
+                    UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
+                    var success = await profileSettings.TrySetWallpaperImageAsync(storageFile);
+                    //download_status.Text = success ? "success" : "failed";
+                }
             }
             last_imageID = imageID;
-            return;
+        }
+        private async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB, FileFormat fileFormat)
+        {
+            string FileName = "wallpaper";
+            Guid BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
+            switch (fileFormat)
+            {
+                case FileFormat.Jpeg:
+                    FileName += ".jpeg";
+                    BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
+                    break;
+
+                case FileFormat.Png:
+                    FileName += ".png";
+                    BitmapEncoderGuid = BitmapEncoder.PngEncoderId;
+                    break;
+
+                case FileFormat.Bmp:
+                    FileName += ".bmp";
+                    BitmapEncoderGuid = BitmapEncoder.BmpEncoderId;
+                    break;
+
+                case FileFormat.Tiff:
+                    FileName += ".tiff";
+                    BitmapEncoderGuid = BitmapEncoder.TiffEncoderId;
+                    break;
+
+                case FileFormat.Gif:
+                    FileName += ".gif";
+                    BitmapEncoderGuid = BitmapEncoder.GifEncoderId;
+                    break;
+            }
+
+            var file = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync(FileName, CreationCollisionOption.ReplaceExisting);
+            using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+            {
+                BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoderGuid, stream);
+                Stream pixelStream = WB.PixelBuffer.AsStream();
+                byte[] pixels = new byte[pixelStream.Length];
+                await pixelStream.ReadAsync(pixels, 0, pixels.Length);
+
+                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
+                                    (uint)WB.PixelWidth,
+                                    (uint)WB.PixelHeight,
+                                    96.0,
+                                    96.0,
+                                    pixels);
+                await encoder.FlushAsync();
+            }
+            return file;
+        }
+
+        private enum FileFormat
+        {
+            Jpeg,
+            Png,
+            Bmp,
+            Tiff,
+            Gif
         }
         public void CleanCDN()
         {

@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Background;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
@@ -31,30 +32,57 @@ namespace EarthLiveUWP
     public sealed partial class MainPage : Page
     {
         private CancellationTokenSource cancelToken = new System.Threading.CancellationTokenSource();
+        private BackgroundTaskRegistration task;
+        private bool taskRegistered = false;
+        private readonly string taskName = "BackGroundDownloadService";
         public MainPage()
         {
             this.InitializeComponent();
-            ChangeWidgetState(false);
+            foreach (var task in BackgroundTaskRegistration.AllTasks)
+            {
+                if (task.Value.Name == taskName)
+                {
+                    taskRegistered = true;
+                }
+            }
+            ChangeWidgetState();
         }
 
-        private async void button_start_Click(object sender, RoutedEventArgs e)
+        private void button_start_Click(object sender, RoutedEventArgs e)
         {
-            ChangeWidgetState(true);
-            cancelToken = new CancellationTokenSource();
-            await new DownloaderHimawari8().UpdateImage(cancelToken, imageView);
+            if (!taskRegistered)
+            {
+                var builder = new BackgroundTaskBuilder();
+                builder.Name = taskName;
+                builder.TaskEntryPoint = "EarthLiveUWP.Services";
+                builder.SetTrigger(new TimeTrigger(15, false));
+                task = builder.Register();
+                taskRegistered = true;
+            }
+            ChangeWidgetState();
+            //cancelToken = new CancellationTokenSource();
+            //await new DownloaderHimawari8().UpdateImage(cancelToken, imageView);
         }
 
-        private void ChangeWidgetState(bool state)
+        private void ChangeWidgetState()
         {
-            button_start.IsEnabled = !state;
-            button_setting.IsEnabled = !state;
-            button_stop.IsEnabled = state;
+            button_start.IsEnabled = !taskRegistered;
+            button_setting.IsEnabled = !taskRegistered;
+            button_stop.IsEnabled = taskRegistered;
         }
 
         private void button_stop_Click(object sender, RoutedEventArgs e)
         {
-            ChangeWidgetState(false);
-            cancelToken.Cancel();
+            foreach (var task in BackgroundTaskRegistration.AllTasks)
+            {
+                if (task.Value.Name == taskName)
+                {
+                    task.Value.Unregister(true);
+                }
+            }
+            taskRegistered = false;
+            ChangeWidgetState();
+            //cancelToken.Cancel();
         }
 
 
