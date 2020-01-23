@@ -8,11 +8,14 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-
-    <StackPanel Orientation="Horizontal">
-        <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click"/>
-        <Button x:Name="button_stop" Margin="8" Content="Stop" Click="button_stop_Click"/>
-        <Button x:Name="button_setting" Margin="8" Content="Setting"/>
-        <TextBlock x:Name="download_status"/>
+    <StackPanel Orientation="Vertical">
+        <StackPanel Orientation="Horizontal">
+            <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click"/>
+            <Button x:Name="button_stop" Margin="8" Content="Stop" Click="button_stop_Click"/>
+            <Button x:Name="button_setting" Margin="8" Content="Setting"/>
+            <TextBlock x:Name="download_status"/>
+        </StackPanel>
+        <Image x:Name="imageView" />
     </StackPanel>
+
 </Page>

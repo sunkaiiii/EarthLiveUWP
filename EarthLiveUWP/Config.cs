@@ -14,7 +14,7 @@ namespace EarthLiveUWP
         public static int interval;
         public static bool autostart;
         public static bool setwallpaper;
-        public static int size;
+        public static int size=2;
         public static int zoom;
         public static string cloud_name;
         public static string api_key;

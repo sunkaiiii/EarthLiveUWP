@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -29,15 +30,18 @@ namespace EarthLiveUWP
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private CancellationTokenSource cancelToken = new System.Threading.CancellationTokenSource();
         public MainPage()
         {
             this.InitializeComponent();
             ChangeWidgetState(false);
         }
 
-        private void button_start_Click(object sender, RoutedEventArgs e)
+        private async void button_start_Click(object sender, RoutedEventArgs e)
         {
             ChangeWidgetState(true);
+            cancelToken = new CancellationTokenSource();
+            await new DownloaderHimawari8().UpdateImage(cancelToken, imageView);
         }
 
         private void ChangeWidgetState(bool state)
@@ -50,39 +54,40 @@ namespace EarthLiveUWP
         private void button_stop_Click(object sender, RoutedEventArgs e)
         {
             ChangeWidgetState(false);
+            cancelToken.Cancel();
         }
 
 
 
-        //private async Task DownloadBingImage()
-        //{
-        //    download_status.Text = "";
-        //    var requestUrl = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7";
-        //    var baseUrl = "https://www.bing.com";
-        //    using (var client = new HttpClient())
-        //    {
-        //        try
-        //        {
-        //            var json = await client.GetStringAsync(requestUrl);
-        //            var imageBean = JsonConvert.DeserializeObject<ImageBean>(json);
-        //            var filename = "File" + DateTime.Now.Ticks.ToString() + ".jpg";
-        //            var source = new Uri(baseUrl + imageBean.Images[0].Url);
-        //            StorageFile destination = await ApplicationData.Current.LocalFolder.CreateFileAsync(filename);
-        //            WebClient webClient = new WebClient();
-        //            await webClient.DownloadFileTaskAsync(source, destination.Path);
-        //            if (UserProfilePersonalizationSettings.IsSupported())
-        //            {
-        //                UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
-        //                var success = await profileSettings.TrySetWallpaperImageAsync(destination);
-        //                download_status.Text = success ? "success" : "failed";
-        //            }
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            download_status.Text = e.Message;
-        //            Trace.WriteLine(e);
-        //        }
-        //    }
-        //}
+        private async Task DownloadBingImage()
+        {
+            download_status.Text = "";
+            var requestUrl = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7";
+            var baseUrl = "https://www.bing.com";
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    var json = await client.GetStringAsync(requestUrl);
+                    var imageBean = JsonConvert.DeserializeObject<ImageBean>(json);
+                    var filename = "File" + DateTime.Now.Ticks.ToString() + ".jpg";
+                    var source = new Uri(baseUrl + imageBean.Images[0].Url);
+                    StorageFile destination = await ApplicationData.Current.LocalFolder.CreateFileAsync(filename);
+                    WebClient webClient = new WebClient();
+                    await webClient.DownloadFileTaskAsync(source, destination.Path);
+                    if (UserProfilePersonalizationSettings.IsSupported())
+                    {
+                        UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
+                        var success = await profileSettings.TrySetWallpaperImageAsync(destination);
+                        download_status.Text = success ? "success" : "failed";
+                    }
+                }
+                catch (Exception e)
+                {
+                    download_status.Text = e.Message;
+                    Trace.WriteLine(e);
+                }
+            }
+        }
     }
 }

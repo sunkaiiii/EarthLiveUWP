@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,6 +9,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.UI.Xaml.Media.Imaging;
 
 namespace EarthLiveUWP
 {
@@ -69,8 +70,9 @@ namespace EarthLiveUWP
                     for (int jj = 0; jj < Config.size; jj++)
                     {
                         string url = string.Format("{0}/{1}d/550/{2}_{3}_{4}.png", image_source, Config.size, imageID, ii, jj);
-                        string image_path = string.Format("{0}\\{1}_{2}.png", Config.image_folder, ii, jj); // remove the '/' in imageID
-                        await client.DownloadFileTaskAsync(url, image_path);
+                        string image_name = string.Format("{0}_{1}.png", ii, jj); // remove the '/' in imageID
+                        var destination = await ApplicationData.Current.LocalFolder.CreateFileAsync(image_name,CreationCollisionOption.ReplaceExisting);
+                        await client.DownloadFileTaskAsync(url, destination.Path);
                     }
                 }
                 Trace.WriteLine("[save image] " + imageID);
@@ -84,97 +86,110 @@ namespace EarthLiveUWP
             }
         }
 
-        private void JoinImage()
+        private async Task<WriteableBitmap> JoinImageAsync()
         {
-            // join & convert the images to wallpaper.bmp
-            Bitmap bitmap = new Bitmap(550 * Config.size, 550 * Config.size);
-            Image[,] tile = new Image[Config.size, Config.size];
-            Graphics g = Graphics.FromImage(bitmap);
+            var writeablebmp = new WriteableBitmap(2000,2000);
             for (int ii = 0; ii < Config.size; ii++)
             {
                 for (int jj = 0; jj < Config.size; jj++)
                 {
-                    tile[ii, jj] = Image.FromFile(string.Format("{0}\\{1}_{2}.png", Config.image_folder, ii, jj));
-                    g.DrawImage(tile[ii, jj], 550 * ii, 550 * jj);
-                    tile[ii, jj].Dispose();
+                    var file = await ApplicationData.Current.LocalFolder.GetFileAsync(string.Format("{0}_{1}.png", ii, jj));
+                    var image = await BitmapFactory.FromStream(new FileStream(file.Path, FileMode.Open));
+                    writeablebmp.Blit(new Windows.Foundation.Rect(550*ii, 550*jj, 550,550), image, new Windows.Foundation.Rect(0, 0, image.PixelWidth, image.PixelHeight));
                 }
             }
-            g.Save();
-            g.Dispose();
-            if (Config.zoom == 100)
-            {
-                bitmap.Save(string.Format("{0}\\wallpaper.bmp", Config.image_folder), System.Drawing.Imaging.ImageFormat.Bmp);
-            }
-            else if (1 < Config.zoom & Config.zoom < 100)
-            {
-                int new_size = bitmap.Height * Config.zoom / 100;
-                Bitmap zoom_bitmap = new Bitmap(new_size, new_size);
-                Graphics g_2 = Graphics.FromImage(zoom_bitmap);
-                g_2.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g_2.DrawImage(bitmap, 0, 0, new_size, new_size);
-                g_2.Save();
-                g_2.Dispose();
-                zoom_bitmap.Save(string.Format("{0}\\wallpaper.bmp", Config.image_folder), System.Drawing.Imaging.ImageFormat.Bmp);
-                zoom_bitmap.Dispose();
-            }
-            else
-            {
-                Trace.WriteLine("[himawari8 zoom error]");
-            }
+            return writeablebmp;
+            //// join & convert the images to wallpaper.bmp
+            //Bitmap bitmap = new Bitmap(550 * Config.size, 550 * Config.size);
+            //Image[,] tile = new Image[Config.size, Config.size];
+            //Graphics g = Graphics.FromImage(bitmap);
+            //for (int ii = 0; ii < Config.size; ii++)
+            //{
+            //    for (int jj = 0; jj < Config.size; jj++)
+            //    {
+            //        var file = await ApplicationData.Current.LocalFolder.GetFileAsync(string.Format("{0}_{1}.png", ii, jj));
+            //        tile[ii, jj] = Image.FromFile(file.Path);
+            //        g.DrawImage(tile[ii, jj], 550 * ii, 550 * jj);
+            //        tile[ii, jj].Dispose();
+            //    }
+            //}
+            //g.Save();
+            //g.Dispose();
+            //var wallpaper = await ApplicationData.Current.LocalFolder.CreateFileAsync("wallpaper.bmp");
+            //if (Config.zoom == 100)
+            //{
+            //    bitmap.Save(wallpaper.Path, System.Drawing.Imaging.ImageFormat.Bmp);
+            //}
+            //else if (1 < Config.zoom & Config.zoom < 100)
+            //{
+            //    int new_size = bitmap.Height * Config.zoom / 100;
+            //    Bitmap zoom_bitmap = new Bitmap(new_size, new_size);
+            //    Graphics g_2 = Graphics.FromImage(zoom_bitmap);
+            //    g_2.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            //    g_2.DrawImage(bitmap, 0, 0, new_size, new_size);
+            //    g_2.Save();
+            //    g_2.Dispose();
+            //    zoom_bitmap.Save(wallpaper.Path, System.Drawing.Imaging.ImageFormat.Bmp);
+            //    zoom_bitmap.Dispose();
+            //}
+            //else
+            //{
+            //    Trace.WriteLine("[himawari8 zoom error]");
+            //}
 
-            bitmap.Dispose();
+            //bitmap.Dispose();
 
-            if (Config.saveTexture && Config.saveDirectory != "selected Directory")
-            {
-                if (ImageCount >= Config.saveMaxCount)
-                {
-                    ImageCount = 0;
-                }
-                try
-                {
-                    File.Copy(string.Format("{0}\\wallpaper.bmp", Config.image_folder), Config.saveDirectory + "\\" + "wallpaper_" + ImageCount + ".bmp", true);
-                    ImageCount++;
-                }
-                catch (Exception e)
-                {
-                    Trace.WriteLine("[can't save wallpaper to distDirectory]");
-                    Trace.WriteLine(e.Message);
-                    return;
-                }
-            }
+            //if (Config.saveTexture && Config.saveDirectory != "selected Directory")
+            //{
+            //    if (ImageCount >= Config.saveMaxCount)
+            //    {
+            //        ImageCount = 0;
+            //    }
+            //    try
+            //    {
+            //        File.Copy(string.Format("{0}\\wallpaper.bmp", Config.image_folder), Config.saveDirectory + "\\" + "wallpaper_" + ImageCount + ".bmp", true);
+            //        ImageCount++;
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Trace.WriteLine("[can't save wallpaper to distDirectory]");
+            //        Trace.WriteLine(e.Message);
+            //        return;
+            //    }
+            //}
         }
 
         private void InitFolder()
         {
-            if (Directory.Exists(Config.image_folder))
-            {
-                // delete all images in the image folder.
-                //string[] files = Directory.GetFiles(image_folder);
-                //foreach (string fn in files)
-                //{
-                //    File.Delete(fn);
-                //}
-            }
-            else
-            {
-                Trace.WriteLine("[himawari8 create folder]");
-                Directory.CreateDirectory(Config.image_folder);
-            }
+            //if (Directory.Exists(Config.image_folder))
+            //{
+            //    // delete all images in the image folder.
+            //    //string[] files = Directory.GetFiles(image_folder);
+            //    //foreach (string fn in files)
+            //    //{
+            //    //    File.Delete(fn);
+            //    //}
+            //}
+            //else
+            //{
+            //    Trace.WriteLine("[himawari8 create folder]");
+            //    Directory.CreateDirectory(Config.image_folder);
+            //}
         }
-        public async Task UpdateImage(CancellationTokenSource _source)
+        public async Task UpdateImage(CancellationTokenSource _source, Windows.UI.Xaml.Controls.Image imageView)
         {
             InitFolder();
             if (await GetImageID(_source) == -1)
             {
                 return;
             }
-            if (imageID.Equals(last_imageID))
-            {
-                return;
-            }
+            //if (imageID.Equals(last_imageID))
+            //{
+            //    return;
+            //}
             if (await SaveImage(_source) == 0)
             {
-                JoinImage();
+                imageView.Source= await JoinImageAsync();
             }
             last_imageID = imageID;
             return;
