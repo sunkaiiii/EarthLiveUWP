@@ -41,9 +41,10 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
       <Extensions>
-        <Extension Category="windows.backgroundTasks" EntryPoint="EarthLiveUWP.DownloadServicesBackgroundTask">
+        <Extension Category="windows.backgroundTasks" EntryPoint="Tasks.DownloadServicesBackgroundTask">
           <BackgroundTasks>
             <Task Type="timer"/>
+            <Task Type="systemEvent"/>
           </BackgroundTasks>
         </Extension>
       </Extensions>

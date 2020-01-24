@@ -14,9 +14,10 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System.UserProfile;
+using Windows.UI.Core;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace EarthLiveUWP
+namespace DownloadServices
 {
     public class DownloaderHimawari8
     {
@@ -193,14 +194,14 @@ namespace EarthLiveUWP
             }
             if (await SaveImage(_source) == 0)
             {
-                var bitmap = await JoinImageAsync();
-                var storageFile = await WriteableBitmapToStorageFile(bitmap, FileFormat.Jpeg);
-                if (UserProfilePersonalizationSettings.IsSupported())
-                {
-                    UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
-                    var success = await profileSettings.TrySetWallpaperImageAsync(storageFile);
-                    //download_status.Text = success ? "success" : "failed";
-                }
+                //var bitmap = await JoinImageAsync();
+                //var storageFile = await WriteableBitmapToStorageFile(bitmap, FileFormat.Jpeg);
+                //if (UserProfilePersonalizationSettings.IsSupported())
+                //{
+                //    UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
+                //    var success = await profileSettings.TrySetWallpaperImageAsync(storageFile);
+                //    //download_status.Text = success ? "success" : "failed";
+                //}
             }
             last_imageID = imageID;
         }
