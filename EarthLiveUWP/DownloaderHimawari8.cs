@@ -180,7 +180,7 @@ namespace EarthLiveUWP
             //    Directory.CreateDirectory(Config.image_folder);
             //}
         }
-        public async Task UpdateImage(CancellationTokenSource _source, Windows.UI.Xaml.Controls.Image imageView=null)
+        public async Task UpdateImage(CancellationTokenSource _source)
         {
             InitFolder();
             if (await GetImageID(_source) == -1)
@@ -194,10 +194,6 @@ namespace EarthLiveUWP
             if (await SaveImage(_source) == 0)
             {
                 var bitmap = await JoinImageAsync();
-                if(imageView!=null)
-                {
-                    imageView.Source = bitmap;
-                }
                 var storageFile = await WriteableBitmapToStorageFile(bitmap, FileFormat.Jpeg);
                 if (UserProfilePersonalizationSettings.IsSupported())
                 {

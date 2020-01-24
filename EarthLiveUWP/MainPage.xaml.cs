@@ -32,9 +32,9 @@ namespace EarthLiveUWP
     public sealed partial class MainPage : Page
     {
         private CancellationTokenSource cancelToken = new System.Threading.CancellationTokenSource();
-        private BackgroundTaskRegistration task;
         private bool taskRegistered = false;
         private readonly string taskName = "BackGroundDownloadService";
+        private readonly string taskEntryPoint = "EarthLiveUWP.DownloadServicesBackgroundTask";
         public MainPage()
         {
             this.InitializeComponent();
@@ -52,11 +52,12 @@ namespace EarthLiveUWP
         {
             if (!taskRegistered)
             {
+                var trigger = new TimeTrigger(15,false);
                 var builder = new BackgroundTaskBuilder();
                 builder.Name = taskName;
-                builder.TaskEntryPoint = "EarthLiveUWP.Services";
-                builder.SetTrigger(new TimeTrigger(15, false));
-                task = builder.Register();
+                builder.TaskEntryPoint = taskEntryPoint;
+                builder.SetTrigger(trigger);
+                builder.Register();
                 taskRegistered = true;
             }
             ChangeWidgetState();

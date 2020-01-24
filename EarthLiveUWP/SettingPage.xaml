@@ -23,5 +23,45 @@
                 </DropDownButton.Flyout>
             </DropDownButton>
         </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Wallpaper Zoom(%)"/>
+            <Slider AutomationProperties.Name="Zoom Slider" Width="200"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Update interval"/>
+            <TimePicker MinuteIncrement="15" SelectedTime="0:15" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <CheckBox Content="Autostart"/>
+            <CheckBox Content="SetWallpaper"/>
+            <CheckBox Content="SaveImages"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Image Source"/>
+            <StackPanel Orientation="Vertical">
+                <RadioButton Content="Origin"/>
+                <RadioButton Content="CDN"/>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Orientation="Vertical" Width="300" HorizontalAlignment="Left">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Cloud Name" Width="100" TextAlignment="End"/>
+                <TextBox PlaceholderText="cloud name" Width="150"/>
+            </StackPanel>
+            <TextBlock Text="(How to get a cloud name?)" HorizontalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="API Key"  Width="100" TextAlignment="End"/>
+                <TextBox PlaceholderText="API Key" Width="150"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="API Secret"  Width="100" TextAlignment="End"/>
+                <TextBox PlaceholderText="API Secret" Width="150"/>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
+            <Button Content="Select Directory"/>
+            <TextBlock/>
+        </StackPanel>
     </StackPanel>
 </Page>
