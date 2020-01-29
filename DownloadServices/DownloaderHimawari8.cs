@@ -91,19 +91,32 @@ namespace DownloadServices
             }
         }
 
-        private async Task<WriteableBitmap> JoinImageAsync()
+        private async Task<StorageFile> JoinImageAsync()
         {
-            var writeablebmp = new WriteableBitmap(550*Config.size,550*Config.size);
-            for (int ii = 0; ii < Config.size; ii++)
+            var saveFile= await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("wallpaper.png", CreationCollisionOption.ReplaceExisting);
+            using(var stream=await saveFile.OpenAsync(FileAccessMode.ReadWrite))
             {
-                for (int jj = 0; jj < Config.size; jj++)
+                byte[] canvans = new byte[1100*1100*4];
+                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId,stream);
+                for (uint ii = 0; ii < Config.size; ii++)
                 {
-                    var file = await ApplicationData.Current.LocalFolder.GetFileAsync(string.Format("{0}_{1}.png", ii, jj));
-                    var image = await BitmapFactory.FromStream(new FileStream(file.Path, FileMode.Open));
-                    writeablebmp.Blit(new Windows.Foundation.Rect(550*ii, 550*jj, 550,550), image, new Windows.Foundation.Rect(0, 0, image.PixelWidth, image.PixelHeight));
+                    for (uint jj = 0; jj < Config.size; jj++)
+                    {
+                        var file = await ApplicationData.Current.LocalFolder.GetFileAsync(string.Format("{0}_{1}.png", ii, jj));
+                        using (IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read))
+                        {
+                            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(readStream);
+                            var pixeldata = await decoder.GetPixelDataAsync();
+                            var imagebyte = pixeldata.DetachPixelData();
+                            canvans = PutOnCanvas(canvans, imagebyte, 550 * ii, 550 * jj, 550, 550, 1100);
+                        }
+                    }
                 }
+                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, 1100, 1100, 96, 96, canvans);
+                await encoder.FlushAsync();
             }
-            return writeablebmp;
+            return saveFile;
+
             //// join & convert the images to wallpaper.bmp
             //Bitmap bitmap = new Bitmap(550 * Config.size, 550 * Config.size);
             //Image[,] tile = new Image[Config.size, Config.size];
@@ -164,6 +177,16 @@ namespace DownloadServices
             //}
         }
 
+        byte[] PutOnCanvas(byte[] Canvas, byte[] Image, uint x, uint y, uint imageheight, uint imagewidth, uint CanvasWidth)
+        {
+            for (uint row = y; row < y + imageheight; row++)
+                for (uint col = x; col < x + imagewidth; col++)
+                    for (int i = 0; i < 4; i++)
+                        Canvas[(row * CanvasWidth + col) * 4 + i] = Image[((row - y) * imagewidth + (col - x)) * 4 + i];
+
+            return Canvas;
+        }
+
         private void InitFolder()
         {
             //if (Directory.Exists(Config.image_folder))
@@ -194,76 +217,17 @@ namespace DownloadServices
             }
             if (await SaveImage(_source) == 0)
             {
-                //var bitmap = await JoinImageAsync();
-                //var storageFile = await WriteableBitmapToStorageFile(bitmap, FileFormat.Jpeg);
-                //if (UserProfilePersonalizationSettings.IsSupported())
-                //{
-                //    UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
-                //    var success = await profileSettings.TrySetWallpaperImageAsync(storageFile);
-                //    //download_status.Text = success ? "success" : "failed";
-                //}
+                var saveFile = await JoinImageAsync();
+                if (UserProfilePersonalizationSettings.IsSupported())
+                {
+                    UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
+                    var success = await profileSettings.TrySetWallpaperImageAsync(saveFile);
+                    //download_status.Text = success ? "success" : "failed";
+                }
             }
             last_imageID = imageID;
         }
-        private async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB, FileFormat fileFormat)
-        {
-            string FileName = "wallpaper";
-            Guid BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
-            switch (fileFormat)
-            {
-                case FileFormat.Jpeg:
-                    FileName += ".jpeg";
-                    BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
-                    break;
 
-                case FileFormat.Png:
-                    FileName += ".png";
-                    BitmapEncoderGuid = BitmapEncoder.PngEncoderId;
-                    break;
-
-                case FileFormat.Bmp:
-                    FileName += ".bmp";
-                    BitmapEncoderGuid = BitmapEncoder.BmpEncoderId;
-                    break;
-
-                case FileFormat.Tiff:
-                    FileName += ".tiff";
-                    BitmapEncoderGuid = BitmapEncoder.TiffEncoderId;
-                    break;
-
-                case FileFormat.Gif:
-                    FileName += ".gif";
-                    BitmapEncoderGuid = BitmapEncoder.GifEncoderId;
-                    break;
-            }
-
-            var file = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync(FileName, CreationCollisionOption.ReplaceExisting);
-            using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-            {
-                BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoderGuid, stream);
-                Stream pixelStream = WB.PixelBuffer.AsStream();
-                byte[] pixels = new byte[pixelStream.Length];
-                await pixelStream.ReadAsync(pixels, 0, pixels.Length);
-
-                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
-                                    (uint)WB.PixelWidth,
-                                    (uint)WB.PixelHeight,
-                                    96.0,
-                                    96.0,
-                                    pixels);
-                await encoder.FlushAsync();
-            }
-            return file;
-        }
-
-        private enum FileFormat
-        {
-            Jpeg,
-            Png,
-            Bmp,
-            Tiff,
-            Gif
-        }
         public void CleanCDN()
         {
             Config.Load();
