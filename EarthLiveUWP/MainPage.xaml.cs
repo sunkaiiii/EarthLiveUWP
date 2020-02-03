@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DownloadServices;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -51,7 +52,7 @@ namespace EarthLiveUWP
             ChangeWidgetState();
         }
 
-        private void button_start_Click(object sender, RoutedEventArgs e)
+        private async void button_start_Click(object sender, RoutedEventArgs e)
         {
             if (!taskRegistered)
             {
@@ -62,8 +63,10 @@ namespace EarthLiveUWP
                 builder.SetTrigger(trigger);
                 var task = builder.Register();
                 taskRegistered = true;
+                Task downloadImage = new DownloaderHimawari8().UpdateImage(new CancellationTokenSource());
+                ChangeWidgetState();
+                await downloadImage;
             }
-            ChangeWidgetState();
             //cancelToken = new CancellationTokenSource();
             //await new DownloaderHimawari8().UpdateImage(cancelToken, imageView);
         }
@@ -89,37 +92,6 @@ namespace EarthLiveUWP
         }
 
 
-
-        private async Task DownloadBingImage()
-        {
-            download_status.Text = "";
-            var requestUrl = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7";
-            var baseUrl = "https://www.bing.com";
-            using (var client = new HttpClient())
-            {
-                try
-                {
-                    var json = await client.GetStringAsync(requestUrl);
-                    var imageBean = JsonConvert.DeserializeObject<ImageBean>(json);
-                    var filename = "File" + DateTime.Now.Ticks.ToString() + ".jpg";
-                    var source = new Uri(baseUrl + imageBean.Images[0].Url);
-                    StorageFile destination = await ApplicationData.Current.LocalFolder.CreateFileAsync(filename);
-                    WebClient webClient = new WebClient();
-                    await webClient.DownloadFileTaskAsync(source, destination.Path);
-                    if (UserProfilePersonalizationSettings.IsSupported())
-                    {
-                        UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
-                        var success = await profileSettings.TrySetWallpaperImageAsync(destination);
-                        download_status.Text = success ? "success" : "failed";
-                    }
-                }
-                catch (Exception e)
-                {
-                    download_status.Text = e.Message;
-                    Trace.WriteLine(e);
-                }
-            }
-        }
 
         private void button_setting_Click(object sender, RoutedEventArgs e)
         {

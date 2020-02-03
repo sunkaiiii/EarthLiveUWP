@@ -96,7 +96,7 @@ namespace DownloadServices
             var saveFile= await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("wallpaper.png", CreationCollisionOption.ReplaceExisting);
             using(var stream=await saveFile.OpenAsync(FileAccessMode.ReadWrite))
             {
-                byte[] canvans = new byte[1100*1100*4];
+                byte[] canvans = new byte[3840*2160*4];
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId,stream);
                 for (uint ii = 0; ii < Config.size; ii++)
                 {
@@ -108,11 +108,11 @@ namespace DownloadServices
                             BitmapDecoder decoder = await BitmapDecoder.CreateAsync(readStream);
                             var pixeldata = await decoder.GetPixelDataAsync();
                             var imagebyte = pixeldata.DetachPixelData();
-                            canvans = PutOnCanvas(canvans, imagebyte, 550 * ii, 550 * jj, 550, 550, 1100);
+                            canvans = PutOnCanvas(canvans, imagebyte, 1370+550 * ii, 530+550 * jj, 550, 550, 3840);
                         }
                     }
                 }
-                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, 1100, 1100, 96, 96, canvans);
+                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, 3840, 2160, 96, 96, canvans);
                 await encoder.FlushAsync();
             }
             return saveFile;

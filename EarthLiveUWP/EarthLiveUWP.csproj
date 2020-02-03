@@ -123,7 +123,6 @@
       <DependentUpon>SettingPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Config.cs" />
-    <Compile Include="DownloaderHimawari8.cs" />
     <Compile Include="ImageBean.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -174,6 +173,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DownloadServices\DownloadServices.csproj">
+      <Project>{61B77A4E-9FCE-44E6-89F8-7608210A4175}</Project>
+      <Name>DownloadServices</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Tasks\Tasks.csproj">
       <Project>{5d60cae9-6cf9-4798-b42e-8801eba5a022}</Project>
       <Name>Tasks</Name>
