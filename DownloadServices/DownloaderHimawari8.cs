@@ -10,6 +10,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Tools;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -96,11 +97,12 @@ namespace DownloadServices
             var saveFile= await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("wallpaper.png", CreationCollisionOption.ReplaceExisting);
             using(var stream=await saveFile.OpenAsync(FileAccessMode.ReadWrite))
             {
-                byte[] canvans = new byte[3840*2160*4];
+                var resolution = ScreenHelper.GetScreenResolution();
+                byte[] canvans = new byte[resolution.Width* resolution.Height* 4];
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId,stream);
-                for (uint ii = 0; ii < Config.size; ii++)
+                for (int ii = 0; ii < Config.size; ii++)
                 {
-                    for (uint jj = 0; jj < Config.size; jj++)
+                    for (int jj = 0; jj < Config.size; jj++)
                     {
                         var file = await ApplicationData.Current.LocalFolder.GetFileAsync(string.Format("{0}_{1}.png", ii, jj));
                         using (IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read))
@@ -108,7 +110,9 @@ namespace DownloadServices
                             BitmapDecoder decoder = await BitmapDecoder.CreateAsync(readStream);
                             var pixeldata = await decoder.GetPixelDataAsync();
                             var imagebyte = pixeldata.DetachPixelData();
-                            canvans = PutOnCanvas(canvans, imagebyte, 1370+550 * ii, 530+550 * jj, 550, 550, 3840);
+                            uint widthLocation = Convert.ToUInt32(resolution.GetWidthBlackArea(Config.size) + 550 * ii);
+                            uint heightLocation = Convert.ToUInt32(resolution.GetHeightBlackArea(Config.size) + 550 * jj);
+                            canvans = PutOnCanvas(canvans, imagebyte, widthLocation, heightLocation, 550, 550, 3840);
                         }
                     }
                 }
@@ -181,11 +185,12 @@ namespace DownloadServices
         {
             for (uint row = y; row < y + imageheight; row++)
                 for (uint col = x; col < x + imagewidth; col++)
-                    for (int i = 0; i < 4; i++)
+                    for (uint i = 0; i < 4; i++)
                         Canvas[(row * CanvasWidth + col) * 4 + i] = Image[((row - y) * imagewidth + (col - x)) * 4 + i];
 
             return Canvas;
         }
+
 
         private void InitFolder()
         {
