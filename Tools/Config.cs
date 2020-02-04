@@ -51,6 +51,13 @@ namespace Tools
             object enumAction(PropertyInfo property, object value) => Enum.Parse(property.PropertyType, value.ToString());
             WalkThourghAllProperties(getvalueAction, propertyAction, enumAction);
         }
+
+        public void SetSize(int i)
+        {
+            this.Size = Convert.ToUInt32(i);
+            Save();
+        }
+
         public void Save()
         {
             object getvalueAction(PropertyInfo property) => property.GetValue(this);
@@ -75,12 +82,21 @@ namespace Tools
             }
         }
 
+        public void SetZoom(double value)
+        {
+            this.Zoom = Convert.ToInt32(value);
+            Save();
+        }
+
         //跳过静态变量
         private PropertyInfo[] GetAllNonStaticPublicProperties() => this.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
         public bool IsFirstStart() => !(ApplicationData.Current.LocalSettings.Values.ContainsKey("isFirstLaunch"));
 
         public void SetStarted() => LocalSettings.Values["isFirstLaunch"] = false;
+
+        public bool IsOriginSource() => this.SourceSelection == SourceSelections.Orgin;
+        public bool IsCDNSource() => this.SourceSelection == SourceSelections.CDN;
 
         public void InitDefaultValues()
         {
@@ -99,6 +115,7 @@ namespace Tools
             SaveDirectory = "";
             SaveMaxCount = -1;
             Save();
+            SetStarted();
         }
 
         private string GetAppVersion()

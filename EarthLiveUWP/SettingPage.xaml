@@ -13,38 +13,37 @@
             <TextBlock Text="Iamge Quality"/>
             <DropDownButton Content="550*550" x:Name="ImageQualitySelection">
                 <DropDownButton.Flyout>
-                    <MenuFlyout Placement="Bottom">
-                        <MenuFlyoutItem Text="550*550"/>
-                        <MenuFlyoutItem Text="1100*1100"/>
-                        <MenuFlyoutItem Text="2200*2200"/>
-                        <MenuFlyoutItem Text="4400*4400"/>
-                        <MenuFlyoutItem Text="8800*8800"/>
+                    <MenuFlyout Placement="Bottom" x:Name="ImageQualitySelectionFlyout">
+                        <MenuFlyoutItem Text="550*550" Click="MenuFlyoutItem_Click"/>
+                        <MenuFlyoutItem Text="1100*1100" Click="MenuFlyoutItem_Click"/>
+                        <MenuFlyoutItem Text="2200*2200" Click="MenuFlyoutItem_Click"/>
+                        <MenuFlyoutItem Text="4400*4400" Click="MenuFlyoutItem_Click" />
+                        <MenuFlyoutItem Text="8800*8800" Click="MenuFlyoutItem_Click"/>
                     </MenuFlyout>
                 </DropDownButton.Flyout>
             </DropDownButton>
         </StackPanel>
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Wallpaper Zoom(%)"/>
-            <Slider AutomationProperties.Name="Zoom Slider" Width="200" x:Name="ZoomSlider"/>
+            <Slider AutomationProperties.Name="Zoom Slider" Width="200" x:Name="ZoomSlider" ValueChanged="ZoomSlider_ValueChanged"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Update interval"/>
-            <TimePicker MinuteIncrement="15" SelectedTime="0:15" />
+            <TimePicker MinuteIncrement="15" SelectedTime="0:00" x:Name="UpdateInterval" />
         </StackPanel>
         <StackPanel Orientation="Horizontal">
-            <CheckBox Content="Autostart"/>
-            <CheckBox Content="SetWallpaper"/>
-            <CheckBox Content="SaveImages"/>
+            <CheckBox Content="SetWallpaper" x:Name="SetWallPaperCheckBox"/>
+            <CheckBox Content="SaveImages" x:Name="SaveImageCheckBox"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Image Source"/>
             <StackPanel Orientation="Vertical">
-                <RadioButton Content="Origin"/>
-                <RadioButton Content="CDN"/>
+                <RadioButton Content="Origin" x:Name="OriginRadioButton"/>
+                <RadioButton Content="CDN" x:Name="CDNRadioButton"/>
             </StackPanel>
         </StackPanel>
 
-        <StackPanel Orientation="Vertical" Width="300" HorizontalAlignment="Left">
+        <StackPanel Orientation="Vertical" Width="300" HorizontalAlignment="Left" x:Name="CDNStackPanel">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Cloud Name" Width="100" TextAlignment="End"/>
                 <TextBox PlaceholderText="cloud name" Width="150"/>

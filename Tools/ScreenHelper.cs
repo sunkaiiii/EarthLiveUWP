@@ -39,7 +39,8 @@ namespace Tools
 
             private uint CalculateArea(uint pixel, uint imageCount)
             {
-                return (pixel -  550 * imageCount) / 2;
+                int result = Convert.ToInt32((pixel - 550 * imageCount) / 2 - 1);
+                return result>=0?Convert.ToUInt32(result):0;
             }
         }
         public static ScreenResolution GetScreenResolution()
