@@ -122,7 +122,6 @@
     <Compile Include="SettingPage.xaml.cs">
       <DependentUpon>SettingPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Config.cs" />
     <Compile Include="ImageBean.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -180,6 +179,10 @@
     <ProjectReference Include="..\Tasks\Tasks.csproj">
       <Project>{5d60cae9-6cf9-4798-b42e-8801eba5a022}</Project>
       <Name>Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Tools\Tools.csproj">
+      <Project>{D6BC9DF1-41AF-42C9-A4A9-1B9FFA9AD82F}</Project>
+      <Name>Tools</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

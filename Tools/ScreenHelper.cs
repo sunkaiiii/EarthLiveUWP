@@ -47,7 +47,11 @@ namespace Tools
             var displayInformation = DisplayInformation.GetForCurrentView();
             return new ScreenResolution(displayInformation.ScreenWidthInRawPixels, displayInformation.ScreenHeightInRawPixels);
         }
-
+        public static uint GetDefaultSize()
+        {
+            var screenResolution = GetScreenResolution();
+            return Convert.ToUInt32(Math.Round(screenResolution.Width / 550.0 / 2.0));
+        }
 
     }
 }

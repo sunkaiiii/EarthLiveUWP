@@ -11,7 +11,7 @@
     <StackPanel Orientation="Vertical">
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Iamge Quality"/>
-            <DropDownButton Content="550*550">
+            <DropDownButton Content="550*550" x:Name="ImageQualitySelection">
                 <DropDownButton.Flyout>
                     <MenuFlyout Placement="Bottom">
                         <MenuFlyoutItem Text="550*550"/>
@@ -25,7 +25,7 @@
         </StackPanel>
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Wallpaper Zoom(%)"/>
-            <Slider AutomationProperties.Name="Zoom Slider" Width="200"/>
+            <Slider AutomationProperties.Name="Zoom Slider" Width="200" x:Name="ZoomSlider"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Update interval"/>

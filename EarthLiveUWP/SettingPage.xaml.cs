@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Tools;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
@@ -25,6 +26,13 @@ namespace EarthLiveUWP
         public SettingPage()
         {
             this.InitializeComponent();
+            InitUI();
+        }
+
+        private void InitUI()
+        {
+            var config = Config.Instance;
+            ZoomSlider.Value = config.Zoom;
         }
     }
 }

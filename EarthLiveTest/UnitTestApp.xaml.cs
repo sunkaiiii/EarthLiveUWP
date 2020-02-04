@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using Tools;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using Windows.Storage;
-using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -18,7 +15,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
-namespace EarthLiveUWP
+namespace EarthLiveTest
 {
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
@@ -42,6 +39,14 @@ namespace EarthLiveUWP
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+
+#if DEBUG
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                this.DebugSettings.EnableFrameRateCounter = true;
+            }
+#endif
+
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
@@ -52,39 +57,22 @@ namespace EarthLiveUWP
                 rootFrame = new Frame();
 
                 rootFrame.NavigationFailed += OnNavigationFailed;
-                rootFrame.Navigated += OnNavigated;
 
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {
                     //TODO: Load state from previously suspended application
                 }
 
-                //始终显示返回按钮
-                SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
-
-                SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
-                    rootFrame.CanGoBack ?
-                    AppViewBackButtonVisibility.Visible :
-                    AppViewBackButtonVisibility.Collapsed;
-
                 // Place the frame in the current Window
                 Window.Current.Content = rootFrame;
             }
+            
+            Microsoft.VisualStudio.TestPlatform.TestExecutor.UnitTestClient.CreateDefaultUI();
 
-            if (e.PrelaunchActivated == false)
-            {
-                if (rootFrame.Content == null)
-                {
-                    // When the navigation stack isn't restored navigate to the first page,
-                    // configuring the new page by passing required information as a navigation
-                    // parameter
-                    rootFrame.Navigate(typeof(MainPage), e.Arguments);
-                }
-                // Ensure the current window is active
-                Window.Current.Activate();
-            }
+            // Ensure the current window is active
+            Window.Current.Activate();
 
-            InitSettings();
+            Microsoft.VisualStudio.TestPlatform.TestExecutor.UnitTestClient.Run(e.Arguments);
         }
 
         /// <summary>
@@ -109,37 +97,6 @@ namespace EarthLiveUWP
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
-        }
-
-        //处理顶部返回按钮的返回逻辑
-        private void OnNavigated(object sender, NavigationEventArgs e)
-        {
-            // Each time a navigation event occurs, update the Back button's visibility
-            SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
-                ((Frame)sender).CanGoBack ?
-                AppViewBackButtonVisibility.Visible :
-                AppViewBackButtonVisibility.Collapsed;
-        }
-
-        //处理键盘返回的逻辑
-        private void OnBackRequested(object sender, BackRequestedEventArgs e)
-        {
-            Frame rootFrame = Window.Current.Content as Frame;
-
-            if (rootFrame != null && rootFrame.CanGoBack)
-            {
-                e.Handled = true;
-                rootFrame.GoBack();
-            }
-        }
-
-        //初始化设置
-        private void InitSettings()
-        {
-            if(Config.Instance.IsFirstStart())
-            {
-                Config.Instance.InitDefaultValues();
-            }
         }
     }
 }
