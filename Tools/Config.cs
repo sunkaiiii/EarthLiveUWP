@@ -46,16 +46,16 @@ namespace Tools
         }
         public void Load()
         {
-            Func<PropertyInfo, object> getvalueAction = (property) => LocalSettings.Values[property.Name.ToString()];
-            Action<PropertyInfo, object> propertyAction = (property, value) => property.SetValue(this, value);
-            Func<PropertyInfo, object, object> enumAction = (property, value) => Enum.Parse(property.PropertyType, value.ToString());
+            object getvalueAction(PropertyInfo property) => LocalSettings.Values[property.Name.ToString()];
+            void propertyAction(PropertyInfo property, object value) => property.SetValue(this, value);
+            object enumAction(PropertyInfo property, object value) => Enum.Parse(property.PropertyType, value.ToString());
             WalkThourghAllProperties(getvalueAction, propertyAction, enumAction);
         }
         public void Save()
         {
-            Func<PropertyInfo, object> getvalueAction = (property) => property.GetValue(this);
-            Action<PropertyInfo, object> propertyAction = (property, value) => LocalSettings.Values[property.Name.ToString()] = value;
-            Func<PropertyInfo, object, object> enumAction = (property, value) => value.ToString();
+            object getvalueAction(PropertyInfo property) => property.GetValue(this);
+            void propertyAction(PropertyInfo property, object value) => LocalSettings.Values[property.Name.ToString()] = value;
+            object enumAction(PropertyInfo property, object value) => value.ToString();
             WalkThourghAllProperties(getvalueAction, propertyAction, enumAction);
         }
 
