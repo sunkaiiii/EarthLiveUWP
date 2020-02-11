@@ -25,14 +25,15 @@ namespace DownloadServices
         private string imageID = "";
         private static string last_imageID = "0";
         private int ImageCount { get; set; }
-        private string json_url = "http://himawari8.nict.go.jp/img/D531106/latest.json";
-        private uint size;
-        private string imageSource;
+        private readonly string json_url = "http://himawari8.nict.go.jp/img/D531106/latest.json";
+        private readonly uint size;
+        private readonly string imageSource;
+        private readonly int zoom;
         public DownloaderHimawari8()
         {
             Config config = Config.Instance;
             ImageCount = 0;
-            size = Convert.ToUInt32(Math.Pow(2, config.Size));
+            size = config.Size;
             if (config.SourceSelection == Config.SourceSelections.CDN)
             {
                 imageSource = "http://res.cloudinary.com/" + config.CloudName + "/image/fetch/http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
@@ -41,6 +42,7 @@ namespace DownloadServices
             {
                 imageSource = "http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
             }
+            zoom = config.Zoom;
         }
 
         public async Task UpdateImage(CancellationTokenSource _source)
@@ -183,6 +185,11 @@ namespace DownloadServices
                 {
                     encoder.BitmapTransform.ScaledWidth = Convert.ToUInt32(width * scale);
                     encoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(height * scale);
+                }
+                if(zoom<100)
+                {
+                    encoder.BitmapTransform.ScaledWidth =Convert.ToUInt32(encoder.BitmapTransform.ScaledWidth*(zoom / 100.0));
+                    encoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(encoder.BitmapTransform.ScaledHeight * (zoom / 100.0));
                 }
                 encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, width, height, 96, 96, canvans);
                 await encoder.FlushAsync();

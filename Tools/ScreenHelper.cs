@@ -51,7 +51,9 @@ namespace Tools
         public static uint GetDefaultSize()
         {
             var screenResolution = GetScreenResolution();
-            return Convert.ToUInt32(Math.Round(screenResolution.Width / 550.0 / 2.0));
+            double widthSize =  Math.Round(Math.Sqrt(screenResolution.Width/550.0));
+            double heightSize = Math.Round(Math.Sqrt(screenResolution.Height / 550.0));
+            return Convert.ToUInt32(Math.Pow(2, Math.Min(widthSize, heightSize)));
         }
 
     }

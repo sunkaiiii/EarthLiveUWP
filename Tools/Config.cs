@@ -15,7 +15,7 @@ namespace Tools
         public string Version { get; private set; }
         public Staellites Satellite { get; private set; }
         public string ImageFolder { get; private set; }
-        public int Interval { get; private set; }
+        public uint Interval { get; private set; }
         public bool SetwallPaper { get; private set; }
         public uint Size { get; private set; }
         public int Zoom { get; private set; }
@@ -52,12 +52,6 @@ namespace Tools
             WalkThourghAllProperties(getvalueAction, propertyAction, enumAction);
         }
 
-        public void SetSize(int i)
-        {
-            this.Size = Convert.ToUInt32(i);
-            Save();
-        }
-
         public void Save()
         {
             object getvalueAction(PropertyInfo property) => property.GetValue(this);
@@ -85,6 +79,30 @@ namespace Tools
         public void SetZoom(double value)
         {
             this.Zoom = Convert.ToInt32(value);
+            Save();
+        }
+
+        public void SetCloudName(string text)
+        {
+            this.CloudName = text;
+            Save();
+        }
+
+        public void SetSize(int i)
+        {
+            this.Size = Convert.ToUInt32(i);
+            Save();
+        }
+
+        public void SetInteval(TimeSpan? timeSpan)
+        {
+            this.Interval = Convert.ToUInt32(timeSpan?.TotalMinutes);
+            Save();
+        }
+
+        public void SetSourceSelection(bool CDNChecked)
+        {
+            this.SourceSelection = CDNChecked ? SourceSelections.CDN : SourceSelections.Orgin;
             Save();
         }
 

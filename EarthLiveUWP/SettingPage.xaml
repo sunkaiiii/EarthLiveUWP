@@ -10,20 +10,6 @@
 
     <StackPanel Orientation="Vertical">
         <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Iamge Quality"/>
-            <DropDownButton Content="550*550" x:Name="ImageQualitySelection">
-                <DropDownButton.Flyout>
-                    <MenuFlyout Placement="Bottom" x:Name="ImageQualitySelectionFlyout">
-                        <MenuFlyoutItem Text="550*550" Click="MenuFlyoutItem_Click"/>
-                        <MenuFlyoutItem Text="1100*1100" Click="MenuFlyoutItem_Click"/>
-                        <MenuFlyoutItem Text="2200*2200" Click="MenuFlyoutItem_Click"/>
-                        <MenuFlyoutItem Text="4400*4400" Click="MenuFlyoutItem_Click" />
-                        <MenuFlyoutItem Text="8800*8800" Click="MenuFlyoutItem_Click"/>
-                    </MenuFlyout>
-                </DropDownButton.Flyout>
-            </DropDownButton>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal">
             <TextBlock Text="Wallpaper Zoom(%)"/>
             <Slider AutomationProperties.Name="Zoom Slider" Width="200" x:Name="ZoomSlider" ValueChanged="ZoomSlider_ValueChanged"/>
         </StackPanel>
@@ -46,7 +32,7 @@
         <StackPanel Orientation="Vertical" Width="300" HorizontalAlignment="Left" x:Name="CDNStackPanel">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Cloud Name" Width="100" TextAlignment="End"/>
-                <TextBox PlaceholderText="cloud name" Width="150"/>
+                <TextBox PlaceholderText="cloud name" Width="150" x:Name="CloudName"/>
             </StackPanel>
             <TextBlock Text="(How to get a cloud name?)" HorizontalAlignment="Center"/>
             <StackPanel Orientation="Horizontal">

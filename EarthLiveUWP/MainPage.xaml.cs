@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
+using Tools;
 using Windows.ApplicationModel.Background;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -56,7 +57,7 @@ namespace EarthLiveUWP
         {
             if (!taskRegistered)
             {
-                var trigger = new TimeTrigger(20, false);
+                var trigger = new TimeTrigger(Config.Instance.Interval, false);
                 var builder = new BackgroundTaskBuilder();
                 builder.Name = taskName;
                 builder.TaskEntryPoint = taskEntryPoint;

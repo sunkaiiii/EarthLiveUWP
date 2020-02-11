@@ -34,11 +34,14 @@ namespace EarthLiveUWP
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
             InitUI();
+            UpdateInterval.SelectedTimeChanged += UpdateInterval_SelectedTimeChanged; //init delegate before the initialsation of UIs;
+            OriginRadioButton.Checked += CDNRadioButton_Checked;
+            CDNRadioButton.Checked += CDNRadioButton_Checked;
+            CloudName.TextChanged += CloudName_TextChanged;
         }
 
         private void InitUI()
         {
-            ImageQualitySelection.Content=((MenuFlyoutItem)ImageQualitySelectionFlyout.Items[Convert.ToInt32(config.Size)]).Text;
             ZoomSlider.Value = config.Zoom;
             UpdateInterval.SelectedTime= TimeSpan.FromMinutes(config.Interval);
             SetWallPaperCheckBox.IsChecked = config.SetwallPaper;
@@ -46,21 +49,8 @@ namespace EarthLiveUWP
             OriginRadioButton.IsChecked = config.IsOriginSource();
             CDNRadioButton.IsChecked = config.IsCDNSource();
             CDNStackPanel.Visibility = config.IsCDNSource()? Visibility.Visible:Visibility.Collapsed;
+            CloudName.Text = config.CloudName;
         }
-
-        private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
-        {
-            for(int i=0;i< ImageQualitySelectionFlyout.Items.Count;i++)
-            {
-                var item = ImageQualitySelectionFlyout.Items[i];
-                if(item==sender)
-                {
-                    ImageQualitySelection.Content = ((MenuFlyoutItem)item).Text;
-                    config.SetSize(i);
-                }
-            }
-        }
-
         private void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
             if(dispatcherTimer.IsEnabled)
@@ -76,6 +66,23 @@ namespace EarthLiveUWP
         {
             dispatcherTimer.Stop();
             config.SetZoom(ZoomSlider.Value);
+        }
+
+        private void UpdateInterval_SelectedTimeChanged(TimePicker sender, TimePickerSelectedValueChangedEventArgs args)
+        {
+            config.SetInteval(sender.SelectedTime);
+        }
+
+        private void CDNRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            bool isCDNChecked = CDNRadioButton.IsChecked ?? false;
+            CDNStackPanel.Visibility = isCDNChecked ? Visibility.Visible : Visibility.Collapsed;
+            config.SetSourceSelection(isCDNChecked);
+        }
+
+        private void CloudName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            config.SetCloudName(((TextBox)sender).Text);
         }
     }
 }
