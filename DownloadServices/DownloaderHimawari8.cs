@@ -26,11 +26,21 @@ namespace DownloadServices
         private static string last_imageID = "0";
         private int ImageCount { get; set; }
         private string json_url = "http://himawari8.nict.go.jp/img/D531106/latest.json";
-        private Config config;
+        private uint size;
+        private string imageSource;
         public DownloaderHimawari8()
         {
+            Config config = Config.Instance;
             ImageCount = 0;
-            config = Config.Instance;
+            size = Convert.ToUInt32(Math.Pow(2, config.Size));
+            if (config.SourceSelection == Config.SourceSelections.CDN)
+            {
+                imageSource = "http://res.cloudinary.com/" + config.CloudName + "/image/fetch/http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
+            }
+            else
+            {
+                imageSource = "http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
+            }
         }
 
         public async Task UpdateImage(CancellationTokenSource _source)
@@ -86,25 +96,16 @@ namespace DownloadServices
         private async Task<int> SaveImage(CancellationTokenSource _source)
         {
             WebClient client = new WebClient();
-            string image_source = "";
             _source.Token.Register(client.CancelAsync);
-            if (config.SourceSelection == Config.SourceSelections.CDN)
-            {
-                image_source = "http://res.cloudinary.com/" + config.CloudName + "/image/fetch/http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
-            }
-            else
-            {
-                image_source = "http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
-            }
             try
             {
-                for (int ii = 0; ii < config.Size; ii++)
+                for (int ii = 0; ii < size; ii++)
                 {
-                    for (int jj = 0; jj < config.Size; jj++)
+                    for (int jj = 0; jj < size; jj++)
                     {
-                        string url = string.Format("{0}/{1}d/550/{2}_{3}_{4}.png", image_source,config.Size, imageID, ii, jj);
+                        string url = string.Format("{0}/{1}d/550/{2}_{3}_{4}.png", imageSource, size, imageID, ii, jj);
                         string image_name = string.Format("{0}_{1}.png", ii, jj); // remove the '/' in imageID
-                        var destination = await ApplicationData.Current.LocalFolder.CreateFileAsync(image_name,CreationCollisionOption.ReplaceExisting);
+                        var destination = await ApplicationData.Current.LocalFolder.CreateFileAsync(image_name, CreationCollisionOption.ReplaceExisting);
                         await client.DownloadFileTaskAsync(url, destination.Path);
                     }
                 }
@@ -114,22 +115,53 @@ namespace DownloadServices
             catch (Exception e)
             {
                 Trace.WriteLine(e.Message + " " + imageID);
-                Trace.WriteLine(string.Format("[image_folder]{0} [image_source]{1} [size]{2}", config.ImageFolder, image_source,config.Size));
+                //Trace.WriteLine(string.Format("[image_folder]{0} [image_source]{1} [size]{2}", config.ImageFolder, imageSource, size));
                 return -1;
             }
         }
 
         private async Task<StorageFile> JoinImageAsync()
         {
-            var saveFile= await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("wallpaper.png", CreationCollisionOption.ReplaceExisting);
-            using(var stream=await saveFile.OpenAsync(FileAccessMode.ReadWrite))
+            Task<StorageFile> earthPath = blitEarthImage();
+            Task<StorageFile> saveFile = putEarthIntoCavans(earthPath);
+            return await saveFile;
+        }
+
+        private async Task<StorageFile> putEarthIntoCavans(Task<StorageFile> earthPath)
+        {
+            var saveFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("wallpaper.png", CreationCollisionOption.ReplaceExisting);
+            using (var stream = await saveFile.OpenAsync(FileAccessMode.ReadWrite))
             {
                 var resolution = ScreenHelper.GetScreenResolution();
-                byte[] canvans = new byte[resolution.Width* resolution.Height* 4];
-                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId,stream);
-                for (int ii = 0; ii < config.Size; ii++)
+                byte[] canvans = new byte[resolution.Width * resolution.Height * 4];
+                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+                using (IRandomAccessStream readStream = await(await earthPath).OpenAsync(FileAccessMode.Read))
                 {
-                    for (int jj = 0; jj < config.Size; jj++)
+                    BitmapDecoder decoder = await BitmapDecoder.CreateAsync(readStream);
+                    var pixeldata = await decoder.GetPixelDataAsync();
+                    var imagebyte = pixeldata.DetachPixelData();
+                    uint widthLocation = resolution.GetWidthBlackArea(decoder.PixelWidth);
+                    uint heightLocation = resolution.GetHeightBlackArea(decoder.PixelHeight);
+                    canvans = PutOnCanvas(canvans, imagebyte, widthLocation, heightLocation, decoder.PixelHeight, decoder.PixelWidth, resolution.Width);
+                }
+                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, resolution.Width, resolution.Height, 96, 96, canvans);
+                await encoder.FlushAsync();
+            }
+            return saveFile;
+        }
+
+        private async Task<StorageFile> blitEarthImage()
+        {
+            var earthFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("earth.png", CreationCollisionOption.ReplaceExisting);
+            using (var stream = await earthFile.OpenAsync(FileAccessMode.ReadWrite))
+            {
+                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+                uint width = size * 550;
+                uint height = size * 550;
+                byte[] canvans = new byte[width * height * 4];
+                for (int ii = 0; ii < size; ii++)
+                {
+                    for (int jj = 0; jj < size; jj++)
                     {
                         var file = await ApplicationData.Current.LocalFolder.GetFileAsync(string.Format("{0}_{1}.png", ii, jj));
                         using (IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read))
@@ -137,16 +169,25 @@ namespace DownloadServices
                             BitmapDecoder decoder = await BitmapDecoder.CreateAsync(readStream);
                             var pixeldata = await decoder.GetPixelDataAsync();
                             var imagebyte = pixeldata.DetachPixelData();
-                            uint widthLocation = Convert.ToUInt32(resolution.GetWidthBlackArea(config.Size) + 550 * ii);
-                            uint heightLocation = Convert.ToUInt32(resolution.GetHeightBlackArea(config.Size) + 550 * jj);
-                            canvans = PutOnCanvas(canvans, imagebyte, widthLocation, heightLocation, 550, 550, 3840);
+                            uint widthLocation = Convert.ToUInt32(550 * ii);
+                            uint heightLocation = Convert.ToUInt32(550 * jj);
+                            canvans = PutOnCanvas(canvans, imagebyte, widthLocation, heightLocation, 550, 550, width);
                         }
                     }
                 }
-                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, 3840, 2160, 96, 96, canvans);
+                double scale = 1;
+                var screenResolution = ScreenHelper.GetScreenResolution();
+                scale = Math.Min(scale, Convert.ToDouble(screenResolution.Height) / height);
+                scale = Math.Min(scale, Convert.ToDouble(screenResolution.Width) / width);
+                if (scale < 1) //scale the image to fit the screen resolution
+                {
+                    encoder.BitmapTransform.ScaledWidth = Convert.ToUInt32(width * scale);
+                    encoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(height * scale);
+                }
+                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, width, height, 96, 96, canvans);
                 await encoder.FlushAsync();
             }
-            return saveFile;
+            return earthFile;
         }
 
         byte[] PutOnCanvas(byte[] Canvas, byte[] Image, uint x, uint y, uint imageheight, uint imagewidth, uint CanvasWidth)

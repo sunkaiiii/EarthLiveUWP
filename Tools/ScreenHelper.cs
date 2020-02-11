@@ -27,19 +27,19 @@ namespace Tools
                 this.Height = height;
             }
 
-            public uint GetWidthBlackArea(uint imageCount)
+            public uint GetWidthBlackArea(uint imageWidth)
             {
-                return CalculateArea(this.Width, imageCount);
+                return CalculateArea(this.Width, imageWidth);
             }
 
-            public uint GetHeightBlackArea(uint imageCount)
+            public uint GetHeightBlackArea(uint imageHeight)
             {
-                return CalculateArea(this.Height, imageCount);
+                return CalculateArea(this.Height, imageHeight);
             }
 
-            private uint CalculateArea(uint pixel, uint imageCount)
+            private uint CalculateArea(uint pixel, uint imagePixel)
             {
-                int result = Convert.ToInt32((pixel - 550 * imageCount) / 2 - 1);
+                int result = (Convert.ToInt32(pixel) - Convert.ToInt32(imagePixel))/2; //in case the uint overflow
                 return result>=0?Convert.ToUInt32(result):0;
             }
         }
