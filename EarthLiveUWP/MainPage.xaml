@@ -6,16 +6,16 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="Black">
 
-    <StackPanel Orientation="Vertical">
-        <StackPanel Orientation="Horizontal">
+    <StackPanel Orientation="Vertical" x:Name="PannelBackground">
+        <StackPanel Orientation="Horizontal" Background="{ThemeResource SystemControlAcrylicElementBrush}">
             <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click"/>
             <Button x:Name="button_stop" Margin="8" Content="Stop" Click="button_stop_Click"/>
             <Button x:Name="button_setting" Margin="8" Content="Setting" Click="button_setting_Click"/>
             <TextBlock x:Name="download_status"/>
         </StackPanel>
-        <Image x:Name="imageView" />
+        <Image x:Name="imageView" Stretch="UniformToFill"/>
     </StackPanel>
 
 </Page>

@@ -26,6 +26,7 @@ namespace Tools
         public bool SaveTexture { get; set; }
         public string SaveDirectory { get; set; }
         public int SaveMaxCount { get; set; }
+        public string LastImageID { get; private set; }
         private ApplicationDataContainer LocalSettings { get; }
         private static readonly Lazy<Config> lazyInstance = new Lazy<Config>(() => new Config());
         public static Config Instance { get { return lazyInstance.Value; } }
@@ -103,6 +104,12 @@ namespace Tools
         public void SetSourceSelection(bool CDNChecked)
         {
             this.SourceSelection = CDNChecked ? SourceSelections.CDN : SourceSelections.Orgin;
+            Save();
+        }
+
+        public void SetLastImageID(string imageID)
+        {
+            this.LastImageID = imageID;
             Save();
         }
 

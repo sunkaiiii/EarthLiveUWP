@@ -59,30 +59,38 @@ namespace DownloadServices
         }
         public async Task<StorageFile> GetLiveEarthPictureForShowing(CancellationTokenSource source)
         {
-            return await GetLiveEarthPicture(source, GetSavedPureImageByID,BlitEarthImageAsync);
+            var imageID = await GetImageID(source);
+            return await DownloadImageAsync(source, imageID);
         }
         public async Task<StorageFile> GetLiveEarthPictureForWallPaper(CancellationTokenSource source)
         {
-            return await GetLiveEarthPicture(source, GetSavedImageById,JoinImageAsync);
-        }
-        private async Task<StorageFile> GetLiveEarthPicture(CancellationTokenSource source, Func<string,Task<StorageFile>> getFile,Func<string,Task<StorageFile>> joinImage)
-        {
             var imageID = await GetImageID(source);
-             if(imageID != null)
+            var savedFile = await GetSavedImageByIdAsync(imageID);
+            if (savedFile != null)
+                return savedFile;
+            var pureFile =  DownloadImageAsync(source,imageID);
+            if (pureFile == null)
+                return null;
+            return await PutEarthIntoCavansAsync(pureFile,imageID);
+        }
+
+        private async Task<StorageFile> DownloadImageAsync(CancellationTokenSource source, string imageID)
+        {
+            if (imageID != null)
             {
-                var savedFile = await getFile(imageID);
-                if (savedFile != null)
-                    return savedFile;
+                var savedImage = await GetSavedPureImageByIDAsync(imageID);
+                if (savedImage != null)
+                    return savedImage;
                 if (await SaveImage(source, imageID) == 0)
                 {
-                    var saveFile = await joinImage(imageID);
-                    return saveFile;
+                    Config.Instance.SetLastImageID(imageID);
+                    return await BlitEarthImageAsync(imageID);
                 }
             }
             return null;
         }
 
-        private async Task<StorageFile> GetSavedImageById(string imageid)
+        public async Task<StorageFile> GetSavedImageByIdAsync(string imageid)
         {
             try
             {
@@ -92,7 +100,7 @@ namespace DownloadServices
                 return null;
             }
         }
-        private async Task<StorageFile> GetSavedPureImageByID(string imageID)
+        public async Task<StorageFile> GetSavedPureImageByIDAsync(string imageID)
         {
             try
             {
@@ -154,14 +162,7 @@ namespace DownloadServices
             }
         }
 
-        private async Task<StorageFile> JoinImageAsync(string imageId)
-        {
-            Task<StorageFile> earthPath = BlitEarthImageAsync(imageId);
-            Task<StorageFile> saveFile = putEarthIntoCavans(earthPath, imageId);
-            return await saveFile;
-        }
-
-        private async Task<StorageFile> putEarthIntoCavans(Task<StorageFile> earthPath, string imageId)
+        private async Task<StorageFile> PutEarthIntoCavansAsync(Task<StorageFile> earthPath, string imageId)
         {
             var saveFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync(imageId.Replace("/", "_") + ".png", CreationCollisionOption.ReplaceExisting);
             using (var stream = await saveFile.OpenAsync(FileAccessMode.ReadWrite))
@@ -186,7 +187,8 @@ namespace DownloadServices
 
         private async Task<StorageFile> BlitEarthImageAsync(string imageID)
         {
-            var earthFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync(imageID.Replace("/","_")+"_pure.png", CreationCollisionOption.ReplaceExisting);
+            string savedName = imageID.Replace("/", "_") + "_pure.png";
+            var earthFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync(savedName, CreationCollisionOption.ReplaceExisting);
             using (var stream = await earthFile.OpenAsync(FileAccessMode.ReadWrite))
             {
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);

@@ -51,7 +51,21 @@ namespace EarthLiveUWP
                 }
             }
             ChangeWidgetState();
-            var ignored = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await GetEarthPicture());
+            var ignored = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await LoadPreviousImage());//load the cache image
+            var ignored2 = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await GetEarthPicture()); //load the current image
+        }
+
+        private async Task LoadPreviousImage()
+        {
+            var previouseImageID = Config.Instance.LastImageID;
+            if(!String.IsNullOrEmpty(previouseImageID))
+            {
+                var file = await new DownloaderHimawari8().GetSavedPureImageByIDAsync(previouseImageID);
+                if(file!=null)
+                {
+                    await SetImageViewAsync(file);
+                }
+            }
         }
 
         private async Task GetEarthPicture()
@@ -60,11 +74,20 @@ namespace EarthLiveUWP
             var file = await new DownloaderHimawari8().GetLiveEarthPictureForShowing(cancelationToken);
             if (file == null)
                 return;
-           using(var randomAccessStream=await file.OpenAsync(FileAccessMode.Read))
+            await SetImageViewAsync(file);
+        }
+
+        private async Task SetImageViewAsync(StorageFile file)
+        {
+            using (var randomAccessStream = await file.OpenAsync(FileAccessMode.Read))
             {
                 var bitmap = new BitmapImage();
                 await bitmap.SetSourceAsync(randomAccessStream);
-                imageView.Source = bitmap;
+                //imageView.Source = bitmap;
+                ImageBrush imageBrush = new ImageBrush();
+                imageBrush.ImageSource = bitmap;
+                imageBrush.Stretch = Stretch.Uniform;
+                PannelBackground.Background = imageBrush;
             }
         }
 
