@@ -22,8 +22,6 @@ namespace DownloadServices
 {
     public class DownloaderHimawari8
     {
-        private string imageID = "";
-        private static string last_imageID = "0";
         private int ImageCount { get; set; }
         private readonly string json_url = "http://himawari8.nict.go.jp/img/D531106/latest.json";
         private readonly uint size;
@@ -47,31 +45,69 @@ namespace DownloadServices
 
         public async Task UpdateImage(CancellationTokenSource _source)
         {
-            if (await GetImageID(_source) == -1)
+            var saveFile = await GetLiveEarthPictureForWallPaper(_source);
+            if(saveFile==null)
             {
                 return;
             }
-            if (imageID.Equals(last_imageID))
+            if (UserProfilePersonalizationSettings.IsSupported())
             {
-                return;
+                UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
+                var success = await profileSettings.TrySetWallpaperImageAsync(saveFile);
+                //download_status.Text = success ? "success" : "failed";
             }
-            if (await SaveImage(_source) == 0)
+        }
+        public async Task<StorageFile> GetLiveEarthPictureForShowing(CancellationTokenSource source)
+        {
+            return await GetLiveEarthPicture(source, GetSavedPureImageByID,BlitEarthImageAsync);
+        }
+        public async Task<StorageFile> GetLiveEarthPictureForWallPaper(CancellationTokenSource source)
+        {
+            return await GetLiveEarthPicture(source, GetSavedImageById,JoinImageAsync);
+        }
+        private async Task<StorageFile> GetLiveEarthPicture(CancellationTokenSource source, Func<string,Task<StorageFile>> getFile,Func<string,Task<StorageFile>> joinImage)
+        {
+            var imageID = await GetImageID(source);
+             if(imageID != null)
             {
-                var saveFile = await JoinImageAsync();
-                if (UserProfilePersonalizationSettings.IsSupported())
+                var savedFile = await getFile(imageID);
+                if (savedFile != null)
+                    return savedFile;
+                if (await SaveImage(source, imageID) == 0)
                 {
-                    UserProfilePersonalizationSettings profileSettings = UserProfilePersonalizationSettings.Current;
-                    var success = await profileSettings.TrySetWallpaperImageAsync(saveFile);
-                    //download_status.Text = success ? "success" : "failed";
+                    var saveFile = await joinImage(imageID);
+                    return saveFile;
                 }
             }
-            last_imageID = imageID;
+            return null;
         }
 
+        private async Task<StorageFile> GetSavedImageById(string imageid)
+        {
+            try
+            {
+                return await ApplicationData.Current.LocalFolder.GetFileAsync(imageid.Replace("/", "_") + ".png");
+            }catch(FileNotFoundException e)
+            {
+                return null;
+            }
+        }
+        private async Task<StorageFile> GetSavedPureImageByID(string imageID)
+        {
+            try
+            {
+                return await ApplicationData.Current.LocalFolder.GetFileAsync(imageID.Replace("/", "_") + "_pure.png");
+            }
+            catch (FileNotFoundException e)
+            {
+                return null;
+            }
+        }
 
-        private async Task<int> GetImageID(CancellationTokenSource _source)
+        private async Task<string> GetImageID(CancellationTokenSource _source)
         {
             HttpClient client = new HttpClient();
+            string imageID = null;
             try
             {
                 var response = await client.GetAsync(json_url, _source.Token);
@@ -90,12 +126,11 @@ namespace DownloadServices
             catch (Exception e)
             {
                 Trace.WriteLine(e.Message);
-                return -1;
             }
-            return 0;
+            return imageID;
         }
 
-        private async Task<int> SaveImage(CancellationTokenSource _source)
+        private async Task<int> SaveImage(CancellationTokenSource _source,string imageID)
         {
             WebClient client = new WebClient();
             _source.Token.Register(client.CancelAsync);
@@ -111,27 +146,24 @@ namespace DownloadServices
                         await client.DownloadFileTaskAsync(url, destination.Path);
                     }
                 }
-                Trace.WriteLine("[save image] " + imageID);
                 return 0;
             }
             catch (Exception e)
             {
-                Trace.WriteLine(e.Message + " " + imageID);
-                //Trace.WriteLine(string.Format("[image_folder]{0} [image_source]{1} [size]{2}", config.ImageFolder, imageSource, size));
                 return -1;
             }
         }
 
-        private async Task<StorageFile> JoinImageAsync()
+        private async Task<StorageFile> JoinImageAsync(string imageId)
         {
-            Task<StorageFile> earthPath = blitEarthImage();
-            Task<StorageFile> saveFile = putEarthIntoCavans(earthPath);
+            Task<StorageFile> earthPath = BlitEarthImageAsync(imageId);
+            Task<StorageFile> saveFile = putEarthIntoCavans(earthPath, imageId);
             return await saveFile;
         }
 
-        private async Task<StorageFile> putEarthIntoCavans(Task<StorageFile> earthPath)
+        private async Task<StorageFile> putEarthIntoCavans(Task<StorageFile> earthPath, string imageId)
         {
-            var saveFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("wallpaper.png", CreationCollisionOption.ReplaceExisting);
+            var saveFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync(imageId.Replace("/", "_") + ".png", CreationCollisionOption.ReplaceExisting);
             using (var stream = await saveFile.OpenAsync(FileAccessMode.ReadWrite))
             {
                 var resolution = ScreenHelper.GetScreenResolution();
@@ -152,9 +184,9 @@ namespace DownloadServices
             return saveFile;
         }
 
-        private async Task<StorageFile> blitEarthImage()
+        private async Task<StorageFile> BlitEarthImageAsync(string imageID)
         {
-            var earthFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync("earth.png", CreationCollisionOption.ReplaceExisting);
+            var earthFile = await Windows.Storage.ApplicationData.Current.LocalFolder.CreateFileAsync(imageID.Replace("/","_")+"_pure.png", CreationCollisionOption.ReplaceExisting);
             using (var stream = await earthFile.OpenAsync(FileAccessMode.ReadWrite))
             {
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
@@ -259,9 +291,5 @@ namespace DownloadServices
         //        return;
         //    }
         //}
-        public void ResetState()
-        {
-            last_imageID = "0";
-        }
     }
 }

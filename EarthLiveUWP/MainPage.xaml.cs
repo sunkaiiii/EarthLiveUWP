@@ -51,6 +51,21 @@ namespace EarthLiveUWP
                 }
             }
             ChangeWidgetState();
+            var ignored = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await GetEarthPicture());
+        }
+
+        private async Task GetEarthPicture()
+        {
+            var cancelationToken = new CancellationTokenSource();
+            var file = await new DownloaderHimawari8().GetLiveEarthPictureForShowing(cancelationToken);
+            if (file == null)
+                return;
+           using(var randomAccessStream=await file.OpenAsync(FileAccessMode.Read))
+            {
+                var bitmap = new BitmapImage();
+                await bitmap.SetSourceAsync(randomAccessStream);
+                imageView.Source = bitmap;
+            }
         }
 
         private async void button_start_Click(object sender, RoutedEventArgs e)
