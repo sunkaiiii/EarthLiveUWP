@@ -5,17 +5,74 @@
     xmlns:local="using:EarthLiveUWP"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"  
+    xmlns:behaviors="using:Microsoft.Toolkit.Uwp.UI.Animations.Behaviors"  
+    xmlns:core="using:Microsoft.Xaml.Interactions.Core"
     mc:Ignorable="d"
     Background="Black">
 
-    <StackPanel Orientation="Vertical" x:Name="PannelBackground">
-        <StackPanel Orientation="Horizontal" Background="{ThemeResource SystemControlAcrylicElementBrush}">
-            <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click"/>
-            <Button x:Name="button_stop" Margin="8" Content="Stop" Click="button_stop_Click"/>
-            <Button x:Name="button_setting" Margin="8" Content="Setting" Click="button_setting_Click"/>
-            <TextBlock x:Name="download_status"/>
-        </StackPanel>
-        <Image x:Name="imageView" Stretch="UniformToFill"/>
-    </StackPanel>
+    <Page.Resources>
+        <AcrylicBrush x:Key="CustomAcrylicBackgroundBrush"
+              BackgroundSource="Backdrop"
+              TintOpacity="0.2"
+              TintColor="#336699" />
+    </Page.Resources>
+
+    <RelativePanel>
+        <Image Stretch="Uniform" x:Name="PannelBackground" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True">
+            <interactivity:Interaction.Behaviors>
+                <behaviors:Scale x:Name="Scale"/>
+            </interactivity:Interaction.Behaviors>
+        </Image>
+        <RelativePanel RequestedTheme="Dark"  RelativePanel.AlignRightWithPanel="True">
+            <StackPanel RelativePanel.AlignRightWithPanel="True" Orientation="Vertical" Background="{StaticResource CustomAcrylicBackgroundBrush}">
+                <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click"/>
+                <Button x:Name="button_stop" Margin="8" Content="Stop" Click="button_stop_Click"/>
+                <TextBlock x:Name="download_status"/>
+                <StackPanel Orientation="Vertical" Margin="18,18,18,18">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Wallpaper Zoom(%)"/>
+                        <Slider AutomationProperties.Name="Zoom Slider" Width="200" x:Name="ZoomSlider" ValueChanged="ZoomSlider_ValueChanged"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Update interval"/>
+                        <TimePicker MinuteIncrement="15" SelectedTime="0:00" x:Name="UpdateInterval" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Content="SetWallpaper" x:Name="SetWallPaperCheckBox"/>
+                        <CheckBox Content="SaveImages" x:Name="SaveImageCheckBox"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Image Source"/>
+                        <StackPanel Orientation="Vertical">
+                            <RadioButton Content="Origin" x:Name="OriginRadioButton"/>
+                            <RadioButton Content="CDN" x:Name="CDNRadioButton"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical" Width="300" HorizontalAlignment="Left" x:Name="CDNStackPanel">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Cloud Name" Width="100" TextAlignment="End"/>
+                            <TextBox PlaceholderText="cloud name" Width="150" x:Name="CloudName"/>
+                        </StackPanel>
+                        <TextBlock Text="(How to get a cloud name?)" HorizontalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="API Key"  Width="100" TextAlignment="End"/>
+                            <TextBox PlaceholderText="API Key" Width="150"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="API Secret"  Width="100" TextAlignment="End"/>
+                            <TextBox PlaceholderText="API Secret" Width="150"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
+                        <Button Content="Select Directory"/>
+                        <TextBlock/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </RelativePanel>
+    </RelativePanel>
+    
 
 </Page>

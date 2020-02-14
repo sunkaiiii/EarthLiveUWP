@@ -27,6 +27,7 @@ namespace Tools
         public string SaveDirectory { get; set; }
         public int SaveMaxCount { get; set; }
         public string LastImageID { get; private set; }
+        public int LastZoom { get; private set; }
         private ApplicationDataContainer LocalSettings { get; }
         private static readonly Lazy<Config> lazyInstance = new Lazy<Config>(() => new Config());
         public static Config Instance { get { return lazyInstance.Value; } }
@@ -110,6 +111,12 @@ namespace Tools
         public void SetLastImageID(string imageID)
         {
             this.LastImageID = imageID;
+            Save();
+        }
+
+        public void SetLastZoom(int zoom)
+        {
+            this.Zoom = zoom;
             Save();
         }
 

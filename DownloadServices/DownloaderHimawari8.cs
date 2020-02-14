@@ -27,6 +27,7 @@ namespace DownloadServices
         private readonly uint size;
         private readonly string imageSource;
         private readonly int zoom;
+        private readonly int lastZoom;
         public DownloaderHimawari8()
         {
             Config config = Config.Instance;
@@ -41,12 +42,13 @@ namespace DownloadServices
                 imageSource = "http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
             }
             zoom = config.Zoom;
+            lastZoom = config.LastZoom;
         }
 
         public async Task UpdateImage(CancellationTokenSource _source)
         {
             var saveFile = await GetLiveEarthPictureForWallPaper(_source);
-            if(saveFile==null)
+            if (saveFile == null)
             {
                 return;
             }
@@ -68,17 +70,23 @@ namespace DownloadServices
             var savedFile = await GetSavedImageByIdAsync(imageID);
             if (savedFile != null)
                 return savedFile;
-            var pureFile =  DownloadImageAsync(source,imageID);
+            var pureFile = DownloadImageAsync(source, imageID);
             if (pureFile == null)
                 return null;
-            return await PutEarthIntoCavansAsync(pureFile,imageID);
+            return await PutEarthIntoCavansAsync(pureFile, imageID);
         }
 
         private async Task<StorageFile> DownloadImageAsync(CancellationTokenSource source, string imageID)
         {
             if (imageID != null)
             {
-                var savedImage = await GetSavedPureImageByIDAsync(imageID);
+
+                if (zoom !=lastZoom) //regenerate image if the value of zoom is different from the previous download.
+                {
+                    //需要重做这块的逻辑
+                   // await BlitEarthImageAsync( imageID);
+                }
+                StorageFile savedImage = await GetSavedPureImageByIDAsync(imageID);
                 if (savedImage != null)
                     return savedImage;
                 if (await SaveImage(source, imageID) == 0)
@@ -95,7 +103,8 @@ namespace DownloadServices
             try
             {
                 return await ApplicationData.Current.LocalFolder.GetFileAsync(imageid.Replace("/", "_") + ".png");
-            }catch(FileNotFoundException e)
+            }
+            catch (FileNotFoundException e)
             {
                 return null;
             }
@@ -138,7 +147,7 @@ namespace DownloadServices
             return imageID;
         }
 
-        private async Task<int> SaveImage(CancellationTokenSource _source,string imageID)
+        private async Task<int> SaveImage(CancellationTokenSource _source, string imageID)
         {
             WebClient client = new WebClient();
             _source.Token.Register(client.CancelAsync);
@@ -170,7 +179,7 @@ namespace DownloadServices
                 var resolution = ScreenHelper.GetScreenResolution();
                 byte[] canvans = new byte[resolution.Width * resolution.Height * 4];
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                using (IRandomAccessStream readStream = await(await earthPath).OpenAsync(FileAccessMode.Read))
+                using (IRandomAccessStream readStream = await (await earthPath).OpenAsync(FileAccessMode.Read))
                 {
                     BitmapDecoder decoder = await BitmapDecoder.CreateAsync(readStream);
                     var pixeldata = await decoder.GetPixelDataAsync();
@@ -220,13 +229,14 @@ namespace DownloadServices
                     encoder.BitmapTransform.ScaledWidth = Convert.ToUInt32(width * scale);
                     encoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(height * scale);
                 }
-                if(zoom<100)
+                if (zoom < 100)
                 {
-                    encoder.BitmapTransform.ScaledWidth =Convert.ToUInt32(encoder.BitmapTransform.ScaledWidth*(zoom / 100.0));
+                    encoder.BitmapTransform.ScaledWidth = Convert.ToUInt32(encoder.BitmapTransform.ScaledWidth * (zoom / 100.0));
                     encoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(encoder.BitmapTransform.ScaledHeight * (zoom / 100.0));
                 }
                 encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, width, height, 96, 96, canvans);
                 await encoder.FlushAsync();
+                Config.Instance.SetLastZoom(zoom);
             }
             return earthFile;
         }

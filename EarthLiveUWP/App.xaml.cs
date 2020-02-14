@@ -42,6 +42,7 @@ namespace EarthLiveUWP
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            InitSettings();
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
@@ -84,7 +85,6 @@ namespace EarthLiveUWP
                 Window.Current.Activate();
             }
 
-            InitSettings();
         }
 
         /// <summary>

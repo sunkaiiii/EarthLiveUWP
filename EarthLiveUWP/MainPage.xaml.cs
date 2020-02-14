@@ -1,4 +1,5 @@
 ﻿using DownloadServices;
+using Microsoft.Toolkit.Uwp.UI.Animations;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -40,6 +41,8 @@ namespace EarthLiveUWP
         private bool taskRegistered = false;
         private readonly string taskName = "BackGroundDownloadService";
         private readonly string taskEntryPoint = "Tasks.DownloadServicesBackgroundTask";
+        private Config config = Config.Instance;
+        DispatcherTimer dispatcherTimer;
         public MainPage()
         {
             this.InitializeComponent();
@@ -50,6 +53,14 @@ namespace EarthLiveUWP
                     taskRegistered = true;
                 }
             }
+            dispatcherTimer = new DispatcherTimer();
+            dispatcherTimer.Tick += dispatcherTimer_Tick;
+            dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
+            InitUI();
+            UpdateInterval.SelectedTimeChanged += UpdateInterval_SelectedTimeChanged; //init delegate before the initialsation of UIs;
+            OriginRadioButton.Checked += CDNRadioButton_Checked;
+            CDNRadioButton.Checked += CDNRadioButton_Checked;
+            CloudName.TextChanged += CloudName_TextChanged;
             ChangeWidgetState();
             var ignored = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await LoadPreviousImage());//load the cache image
             var ignored2 = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await GetEarthPicture()); //load the current image
@@ -83,11 +94,9 @@ namespace EarthLiveUWP
             {
                 var bitmap = new BitmapImage();
                 await bitmap.SetSourceAsync(randomAccessStream);
-                //imageView.Source = bitmap;
-                ImageBrush imageBrush = new ImageBrush();
-                imageBrush.ImageSource = bitmap;
-                imageBrush.Stretch = Stretch.Uniform;
-                PannelBackground.Background = imageBrush;
+                PannelBackground.Source = bitmap;
+                await Task.Delay(100); //wait for bitmap setting to scale picture
+                await ChangeImageScaleAsync((float)ZoomSlider.Value/100);
             }
         }
 
@@ -112,7 +121,6 @@ namespace EarthLiveUWP
         private void ChangeWidgetState()
         {
             button_start.IsEnabled = !taskRegistered;
-            button_setting.IsEnabled = !taskRegistered;
             button_stop.IsEnabled = taskRegistered;
         }
 
@@ -130,11 +138,70 @@ namespace EarthLiveUWP
             //cancelToken.Cancel();
         }
 
-
-
-        private void button_setting_Click(object sender, RoutedEventArgs e)
+        private void InitUI()
         {
-            this.Frame.Navigate(typeof(SettingPage));
+            ZoomSlider.Value = config.Zoom;
+            UpdateInterval.SelectedTime = TimeSpan.FromMinutes(config.Interval);
+            SetWallPaperCheckBox.IsChecked = config.SetwallPaper;
+            SaveImageCheckBox.IsChecked = !String.IsNullOrEmpty(config.SaveDirectory);
+            OriginRadioButton.IsChecked = config.IsOriginSource();
+            CDNRadioButton.IsChecked = config.IsCDNSource();
+            CDNStackPanel.Visibility = config.IsCDNSource() ? Visibility.Visible : Visibility.Collapsed;
+            CloudName.Text = config.CloudName;
+        }
+        private async void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (dispatcherTimer.IsEnabled)
+            {
+                dispatcherTimer.Stop();
+            }
+            if (config.Zoom == ZoomSlider.Value)
+                return;
+            dispatcherTimer.Start();
+            float scale = (float)ZoomSlider.Value / 100;
+            await ChangeImageScaleAsync(scale);
+        }
+
+        private void dispatcherTimer_Tick(object sender, object e)
+        {
+            dispatcherTimer.Stop();
+            config.SetZoom(ZoomSlider.Value);
+        }
+
+        private void UpdateInterval_SelectedTimeChanged(TimePicker sender, TimePickerSelectedValueChangedEventArgs args)
+        {
+            config.SetInteval(sender.SelectedTime);
+        }
+
+        private void CDNRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            bool isCDNChecked = CDNRadioButton.IsChecked ?? false;
+            CDNStackPanel.Visibility = isCDNChecked ? Visibility.Visible : Visibility.Collapsed;
+            config.SetSourceSelection(isCDNChecked);
+        }
+
+        private void CloudName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            config.SetCloudName(((TextBox)sender).Text);
+        }
+
+        private async Task ChangeImageScaleAsync(float scale)
+        {
+            (float centerX, float centerY) centerXY = GetCenterXY();
+            await PannelBackground.Scale(scaleX: scale, scaleY: scale, duration: 400, centerX: centerXY.centerX, centerY: centerXY.centerY).StartAsync();
+        }
+
+        private void ChangeImageScale(float scale)
+        {
+            (float centerX, float centerY) centerXY = GetCenterXY();
+            PannelBackground.Scale(scaleX: scale, scaleY: scale, duration: 400, centerX: centerXY.centerX, centerY: centerXY.centerY).Start();
+        }
+
+        private (float,float) GetCenterXY()
+        {
+            float centerX = (float)PannelBackground.ActualWidth / 2;
+            float centerY = (float)PannelBackground.ActualHeight / 2;
+            return (centerX, centerY);
         }
     }
 }
