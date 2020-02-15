@@ -80,12 +80,6 @@ namespace DownloadServices
         {
             if (imageID != null)
             {
-
-                if (zoom !=lastZoom) //regenerate image if the value of zoom is different from the previous download.
-                {
-                    //需要重做这块的逻辑
-                   // await BlitEarthImageAsync( imageID);
-                }
                 StorageFile savedImage = await GetSavedPureImageByIDAsync(imageID);
                 if (savedImage != null)
                     return savedImage;
@@ -100,6 +94,8 @@ namespace DownloadServices
 
         public async Task<StorageFile> GetSavedImageByIdAsync(string imageid)
         {
+            if (zoom != lastZoom)
+                return null;
             try
             {
                 return await ApplicationData.Current.LocalFolder.GetFileAsync(imageid.Replace("/", "_") + ".png");
@@ -179,7 +175,24 @@ namespace DownloadServices
                 var resolution = ScreenHelper.GetScreenResolution();
                 byte[] canvans = new byte[resolution.Width * resolution.Height * 4];
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                using (IRandomAccessStream readStream = await (await earthPath).OpenAsync(FileAccessMode.Read))
+                var scaledEarth = await ApplicationData.Current.LocalFolder.CreateFileAsync(imageId.Replace("/", "_") + "_scaled.png",CreationCollisionOption.ReplaceExisting);
+                using(IRandomAccessStream originalEarthStream = await (await earthPath).OpenAsync(FileAccessMode.Read))
+                {
+                    BitmapDecoder decoder = await BitmapDecoder.CreateAsync(originalEarthStream);
+                    using(var scaledImageStream=await scaledEarth.OpenAsync(FileAccessMode.ReadWrite))
+                    {
+                        var scaledEncoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, scaledImageStream);
+                        if (zoom < 100)
+                        {
+                            scaledEncoder.BitmapTransform.ScaledWidth = Convert.ToUInt32(decoder.PixelWidth * (zoom / 100.0));
+                            scaledEncoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(decoder.PixelHeight * (zoom / 100.0));
+                        }
+                        var imageByte = (await decoder.GetPixelDataAsync()).DetachPixelData();
+                        scaledEncoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, decoder.PixelWidth, decoder.PixelHeight, 96, 96, imageByte);
+                        await scaledEncoder.FlushAsync();
+                    }
+                }
+                using (IRandomAccessStream readStream = await scaledEarth.OpenAsync(FileAccessMode.Read))
                 {
                     BitmapDecoder decoder = await BitmapDecoder.CreateAsync(readStream);
                     var pixeldata = await decoder.GetPixelDataAsync();
@@ -191,6 +204,7 @@ namespace DownloadServices
                 encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, resolution.Width, resolution.Height, 96, 96, canvans);
                 await encoder.FlushAsync();
             }
+            Config.Instance.SetLastZoom(zoom);
             return saveFile;
         }
 
@@ -229,14 +243,8 @@ namespace DownloadServices
                     encoder.BitmapTransform.ScaledWidth = Convert.ToUInt32(width * scale);
                     encoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(height * scale);
                 }
-                if (zoom < 100)
-                {
-                    encoder.BitmapTransform.ScaledWidth = Convert.ToUInt32(encoder.BitmapTransform.ScaledWidth * (zoom / 100.0));
-                    encoder.BitmapTransform.ScaledHeight = Convert.ToUInt32(encoder.BitmapTransform.ScaledHeight * (zoom / 100.0));
-                }
                 encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, width, height, 96, 96, canvans);
                 await encoder.FlushAsync();
-                Config.Instance.SetLastZoom(zoom);
             }
             return earthFile;
         }
