@@ -121,6 +121,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="BackGroundTaskHelper.cs" />
     <Compile Include="DownloadServicesBackgroundTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -136,6 +137,10 @@
     <ProjectReference Include="..\DownloadServices\DownloadServices.csproj">
       <Project>{61B77A4E-9FCE-44E6-89F8-7608210A4175}</Project>
       <Name>DownloadServices</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Tools\Tools.csproj">
+      <Project>{D6BC9DF1-41AF-42C9-A4A9-1B9FFA9AD82F}</Project>
+      <Name>Tools</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

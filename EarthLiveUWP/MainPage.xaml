@@ -8,8 +8,7 @@
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"  
     xmlns:behaviors="using:Microsoft.Toolkit.Uwp.UI.Animations.Behaviors"  
     xmlns:core="using:Microsoft.Xaml.Interactions.Core"
-    mc:Ignorable="d"
-    Background="Black">
+    mc:Ignorable="d">
 
     <Page.Resources>
         <AcrylicBrush x:Key="CustomAcrylicBackgroundBrush"
@@ -18,7 +17,7 @@
               TintColor="#336699" />
     </Page.Resources>
 
-    <RelativePanel>
+    <RelativePanel Background="Black">
         <Image Stretch="Uniform" x:Name="PannelBackground" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True">
             <interactivity:Interaction.Behaviors>
                 <behaviors:Scale x:Name="Scale"/>
@@ -26,8 +25,6 @@
         </Image>
         <RelativePanel RequestedTheme="Dark"  RelativePanel.AlignRightWithPanel="True">
             <StackPanel RelativePanel.AlignRightWithPanel="True" Orientation="Vertical" Background="{StaticResource CustomAcrylicBackgroundBrush}">
-                <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click"/>
-                <Button x:Name="button_stop" Margin="8" Content="Stop" Click="button_stop_Click"/>
                 <TextBlock x:Name="download_status"/>
                 <StackPanel Orientation="Vertical" Margin="18,18,18,18">
                     <StackPanel Orientation="Horizontal">
@@ -72,6 +69,9 @@
                 </StackPanel>
             </StackPanel>
         </RelativePanel>
+        <StackPanel Orientation="Horizontal" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" RequestedTheme="Dark" Margin="0,0,0,80" >
+            <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click" Background="{StaticResource CustomAcrylicBackgroundBrush}"/>
+        </StackPanel>
     </RelativePanel>
     
 

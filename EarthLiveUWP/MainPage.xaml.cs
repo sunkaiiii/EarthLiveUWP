@@ -27,6 +27,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Tasks;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -38,21 +39,13 @@ namespace EarthLiveUWP
     public sealed partial class MainPage : Page
     {
         private CancellationTokenSource cancelToken = new System.Threading.CancellationTokenSource();
-        private bool taskRegistered = false;
-        private readonly string taskName = "BackGroundDownloadService";
-        private readonly string taskEntryPoint = "Tasks.DownloadServicesBackgroundTask";
         private Config config = Config.Instance;
         DispatcherTimer dispatcherTimer;
+        private BackGroundTaskHelper taskHelper;
         public MainPage()
         {
             this.InitializeComponent();
-            foreach (var task in BackgroundTaskRegistration.AllTasks)
-            {
-                if (task.Value.Name == taskName)
-                {
-                    taskRegistered = true;
-                }
-            }
+            taskHelper = BackGroundTaskHelper.Instance;
             dispatcherTimer = new DispatcherTimer();
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
@@ -102,40 +95,40 @@ namespace EarthLiveUWP
 
         private async void button_start_Click(object sender, RoutedEventArgs e)
         {
-            if (!taskRegistered)
+            if(!taskHelper.IsTaskRunning)
             {
-                var trigger = new TimeTrigger(Config.Instance.Interval, false);
-                var builder = new BackgroundTaskBuilder();
-                builder.Name = taskName;
-                builder.TaskEntryPoint = taskEntryPoint;
-                builder.SetTrigger(trigger);
-                var task = builder.Register();
-                taskRegistered = true;
-                Task downloadImage = new DownloaderHimawari8().UpdateImage(new CancellationTokenSource());
-                ChangeWidgetState();
-                await downloadImage;
+                await StartProcess();
             }
-            //cancelToken = new CancellationTokenSource();
-            //await new DownloaderHimawari8().UpdateImage(cancelToken, imageView);
+            else
+            {
+                StopProcess();
+            }
         }
         private void ChangeWidgetState()
         {
-            button_start.IsEnabled = !taskRegistered;
-            button_stop.IsEnabled = taskRegistered;
+            button_start.Content = BackGroundTaskHelper.Instance.IsTaskRunning ? "Stop" : "Start";
         }
 
-        private void button_stop_Click(object sender, RoutedEventArgs e)
+        private async Task StartProcess()
         {
-            foreach (var task in BackgroundTaskRegistration.AllTasks)
+            if (!taskHelper.IsTaskRunning)
             {
-                if (task.Value.Name == taskName)
-                {
-                    task.Value.Unregister(true);
-                }
+                taskHelper.RegistBackGroundTask();
+                cancelToken = new CancellationTokenSource();
+                Task downloadImage = new DownloaderHimawari8().UpdateImage(cancelToken);
+                ChangeWidgetState();
+                await downloadImage;
             }
-            taskRegistered = false;
+        }
+
+        private void StopProcess()
+        {
+            taskHelper.UnregistBackgroundTask();
             ChangeWidgetState();
-            //cancelToken.Cancel();
+            if (cancelToken != null && !cancelToken.IsCancellationRequested)
+            {
+                cancelToken.Cancel();
+            }
         }
 
         private void InitUI()
