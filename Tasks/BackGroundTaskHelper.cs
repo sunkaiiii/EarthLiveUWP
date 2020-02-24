@@ -47,6 +47,7 @@ namespace Tasks
                     task.Value.Unregister(true);
                 }
             }
+            taskRegistered = false;
         }
 
       

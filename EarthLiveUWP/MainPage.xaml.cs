@@ -42,6 +42,7 @@ namespace EarthLiveUWP
         private Config config = Config.Instance;
         DispatcherTimer dispatcherTimer;
         private BackGroundTaskHelper taskHelper;
+        private bool downloadComplete=true;
         public MainPage()
         {
             this.InitializeComponent();
@@ -106,7 +107,9 @@ namespace EarthLiveUWP
         }
         private void ChangeWidgetState()
         {
-            button_start.Content = BackGroundTaskHelper.Instance.IsTaskRunning ? "Stop" : "Start";
+            button_start.Content = taskHelper.IsTaskRunning ? "Stop" : "Start";
+            button_start.Visibility = downloadComplete ? Visibility.Visible : Visibility.Collapsed;
+            loadingProcessRing.Visibility = button_start.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private async Task StartProcess()
@@ -116,8 +119,11 @@ namespace EarthLiveUWP
                 taskHelper.RegistBackGroundTask();
                 cancelToken = new CancellationTokenSource();
                 Task downloadImage = new DownloaderHimawari8().UpdateImage(cancelToken);
+                downloadComplete = false;
                 ChangeWidgetState();
                 await downloadImage;
+                downloadComplete = true;
+                ChangeWidgetState();
             }
         }
 
@@ -128,6 +134,7 @@ namespace EarthLiveUWP
             if (cancelToken != null && !cancelToken.IsCancellationRequested)
             {
                 cancelToken.Cancel();
+                cancelToken = null;
             }
         }
 

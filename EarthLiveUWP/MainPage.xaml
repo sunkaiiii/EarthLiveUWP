@@ -71,6 +71,7 @@
         </RelativePanel>
         <StackPanel Orientation="Horizontal" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" RequestedTheme="Dark" Margin="0,0,0,80" >
             <Button x:Name="button_start" Margin="8" Content="Start" Click="button_start_Click" Background="{StaticResource CustomAcrylicBackgroundBrush}"/>
+            <ProgressRing IsActive="True" Visibility="Collapsed" x:Name="loadingProcessRing"/>
         </StackPanel>
     </RelativePanel>
     
