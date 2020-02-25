@@ -28,6 +28,7 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Tasks;
+using Windows.Storage.Pickers;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -143,7 +144,7 @@ namespace EarthLiveUWP
             ZoomSlider.Value = config.Zoom;
             UpdateInterval.SelectedTime = TimeSpan.FromMinutes(config.Interval);
             SetWallPaperCheckBox.IsChecked = config.SetwallPaper;
-            SaveImageCheckBox.IsChecked = !String.IsNullOrEmpty(config.SaveDirectory);
+            SaveImageCheckBox.IsChecked = config.IsSavePicture;
             OriginRadioButton.IsChecked = config.IsOriginSource();
             CDNRadioButton.IsChecked = config.IsCDNSource();
             CDNStackPanel.Visibility = config.IsCDNSource() ? Visibility.Visible : Visibility.Collapsed;
@@ -202,6 +203,16 @@ namespace EarthLiveUWP
             float centerX = (float)PannelBackground.ActualWidth / 2;
             float centerY = (float)PannelBackground.ActualHeight / 2;
             return (centerX, centerY);
+        }
+
+        private void SaveImageCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            config.SetSaveImage();
+        }
+
+        private void SaveImageCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            config.CancelSaveImage();
         }
     }
 }

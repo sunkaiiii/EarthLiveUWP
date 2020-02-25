@@ -24,7 +24,7 @@ namespace Tools
         public string ApiSecret { get; set; }
         public SourceSelections SourceSelection { get; set; }
         public bool SaveTexture { get; set; }
-        public string SaveDirectory { get; set; }
+        public bool IsSavePicture { get; set; }
         public int SaveMaxCount { get; set; }
         public string LastImageID { get; private set; }
         public int LastZoom { get; private set; }
@@ -120,6 +120,17 @@ namespace Tools
             Save();
         }
 
+        public void SetSaveImage()
+        {
+            this.IsSavePicture = true;
+            Save();
+        }
+        public void CancelSaveImage()
+        {
+            this.IsSavePicture = false;
+            Save();
+        }
+
         //跳过静态变量
         private PropertyInfo[] GetAllNonStaticPublicProperties() => this.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
@@ -144,7 +155,7 @@ namespace Tools
             ApiSecret = "";
             SourceSelection = SourceSelections.Orgin;
             SaveTexture = false;
-            SaveDirectory = "";
+            IsSavePicture = false;
             SaveMaxCount = -1;
             Save();
             SetStarted();

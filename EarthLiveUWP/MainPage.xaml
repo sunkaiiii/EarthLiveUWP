@@ -37,8 +37,9 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <CheckBox Content="SetWallpaper" x:Name="SetWallPaperCheckBox"/>
-                        <CheckBox Content="SaveImages" x:Name="SaveImageCheckBox"/>
+                        <CheckBox Content="SaveImages" x:Name="SaveImageCheckBox" Checked="SaveImageCheckBox_Checked" Unchecked="SaveImageCheckBox_Unchecked"/>
                     </StackPanel>
+
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Image Source"/>
                         <StackPanel Orientation="Vertical">
@@ -61,10 +62,6 @@
                             <TextBlock Text="API Secret"  Width="100" TextAlignment="End"/>
                             <TextBox PlaceholderText="API Secret" Width="150"/>
                         </StackPanel>
-                    </StackPanel>
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
-                        <Button Content="Select Directory"/>
-                        <TextBlock/>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>

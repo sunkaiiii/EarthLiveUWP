@@ -28,6 +28,7 @@ namespace DownloadServices
         private readonly string imageSource;
         private readonly int zoom;
         private readonly int lastZoom;
+        private readonly string savePictureFolderName = "EarthLiveUWP";
         public DownloaderHimawari8()
         {
             Config config = Config.Instance;
@@ -205,7 +206,33 @@ namespace DownloadServices
                 await encoder.FlushAsync();
             }
             Config.Instance.SetLastZoom(zoom);
+            if(Config.Instance.IsSavePicture)
+            {
+                await SaveImageToImageFolder(saveFile);
+            }
             return saveFile;
+        }
+
+        private async Task SaveImageToImageFolder(StorageFile saveFile)
+        {
+            try
+            {
+                StorageFolder folder = null;
+                try
+                {
+                    folder = await KnownFolders.PicturesLibrary.GetFolderAsync(savePictureFolderName);
+                }catch(Exception e)
+                {
+                    Trace.WriteLine(e);
+                    await KnownFolders.PicturesLibrary.CreateFolderAsync(savePictureFolderName);
+                    folder = await KnownFolders.PicturesLibrary.GetFolderAsync(savePictureFolderName);
+                }
+                await saveFile.CopyAsync(folder);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e);
+            }
         }
 
         private async Task<StorageFile> BlitEarthImageAsync(string imageID)
