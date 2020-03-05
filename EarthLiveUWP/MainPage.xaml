@@ -18,6 +18,10 @@
     </Page.Resources>
 
     <RelativePanel Background="Black">
+        <StackPanel Orientation="Vertical" RelativePanel.AlignVerticalCenterWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True">
+            <ProgressRing IsActive="True" x:Name="WindowLoadingProgress" Width="120" Height="120"/>
+            <TextBlock HorizontalAlignment="Center" x:Name="LoadingProgressText"  Foreground="White"/>
+        </StackPanel>
         <Image Stretch="Uniform" x:Name="PannelBackground" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True">
             <interactivity:Interaction.Behaviors>
                 <behaviors:Scale x:Name="Scale"/>

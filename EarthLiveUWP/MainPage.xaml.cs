@@ -29,6 +29,7 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Tasks;
 using Windows.Storage.Pickers;
+using System.Globalization;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -44,6 +45,7 @@ namespace EarthLiveUWP
         DispatcherTimer dispatcherTimer;
         private BackGroundTaskHelper taskHelper;
         private bool downloadComplete=true;
+        NumberFormatInfo percentProvider;
         public MainPage()
         {
             this.InitializeComponent();
@@ -51,6 +53,9 @@ namespace EarthLiveUWP
             dispatcherTimer = new DispatcherTimer();
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
+            percentProvider=new NumberFormatInfo();
+            percentProvider.PercentDecimalDigits = 2;
+            percentProvider.CurrencyPositivePattern = 1;
             InitUI();
             UpdateInterval.SelectedTimeChanged += UpdateInterval_SelectedTimeChanged; //init delegate before the initialsation of UIs;
             OriginRadioButton.Checked += CDNRadioButton_Checked;
@@ -77,7 +82,11 @@ namespace EarthLiveUWP
         private async Task GetEarthPicture()
         {
             var cancelationToken = new CancellationTokenSource();
-            var file = await new DownloaderHimawari8().GetLiveEarthPictureForShowing(cancelationToken);
+            var file = await new DownloaderHimawari8().GetLiveEarthPictureForShowing(cancelationToken,(current,all)=>
+            {
+                var result = Convert.ToDouble(current) / all;
+                LoadingProgressText.Text = result.ToString("P", percentProvider);
+            });
             if (file == null)
                 return;
             await SetImageViewAsync(file);
@@ -149,6 +158,7 @@ namespace EarthLiveUWP
             CDNRadioButton.IsChecked = config.IsCDNSource();
             CDNStackPanel.Visibility = config.IsCDNSource() ? Visibility.Visible : Visibility.Collapsed;
             CloudName.Text = config.CloudName;
+            LoadingProgressText.Text = 0.0.ToString("P", percentProvider);
         }
         private async void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {

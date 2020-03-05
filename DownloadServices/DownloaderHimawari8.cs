@@ -60,10 +60,10 @@ namespace DownloadServices
                 //download_status.Text = success ? "success" : "failed";
             }
         }
-        public async Task<StorageFile> GetLiveEarthPictureForShowing(CancellationTokenSource source)
+        public async Task<StorageFile> GetLiveEarthPictureForShowing(CancellationTokenSource source, ProgressIndicator indicator = null)
         {
             var imageID = await GetImageID(source);
-            return await DownloadImageAsync(source, imageID);
+            return await DownloadImageAsync(source, imageID, indicator);
         }
         public async Task<StorageFile> GetLiveEarthPictureForWallPaper(CancellationTokenSource source)
         {
@@ -71,20 +71,20 @@ namespace DownloadServices
             var savedFile = await GetSavedImageByIdAsync(imageID);
             if (savedFile != null)
                 return savedFile;
-            var pureFile = DownloadImageAsync(source, imageID);
+            var pureFile = DownloadImageAsync(source, imageID, null);
             if (pureFile == null)
                 return null;
             return await PutEarthIntoCavansAsync(pureFile, imageID);
         }
 
-        private async Task<StorageFile> DownloadImageAsync(CancellationTokenSource source, string imageID)
+        private async Task<StorageFile> DownloadImageAsync(CancellationTokenSource source, string imageID, ProgressIndicator indicator)
         {
             if (imageID != null)
             {
                 StorageFile savedImage = await GetSavedPureImageByIDAsync(imageID);
                 if (savedImage != null)
                     return savedImage;
-                if (await SaveImage(source, imageID) == 0)
+                if (await SaveImage(source, imageID, indicator) == 0)
                 {
                     Config.Instance.SetLastImageID(imageID);
                     return await BlitEarthImageAsync(imageID);
@@ -144,7 +144,7 @@ namespace DownloadServices
             return imageID;
         }
 
-        private async Task<int> SaveImage(CancellationTokenSource _source, string imageID)
+        private async Task<int> SaveImage(CancellationTokenSource _source, string imageID, ProgressIndicator indicator)
         {
             WebClient client = new WebClient();
             _source.Token.Register(client.CancelAsync);
@@ -158,6 +158,10 @@ namespace DownloadServices
                         string image_name = string.Format("{0}_{1}.png", ii, jj); // remove the '/' in imageID
                         var destination = await ApplicationData.Current.LocalFolder.CreateFileAsync(image_name, CreationCollisionOption.ReplaceExisting);
                         await client.DownloadFileTaskAsync(url, destination.Path);
+                        if (indicator != null)
+                        {
+                            indicator(jj+1+ii*Convert.ToInt32(size) , Convert.ToInt32(size * size));
+                        }
                     }
                 }
                 return 0;
@@ -176,11 +180,11 @@ namespace DownloadServices
                 var resolution = ScreenHelper.GetScreenResolution();
                 byte[] canvans = new byte[resolution.Width * resolution.Height * 4];
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                var scaledEarth = await ApplicationData.Current.LocalFolder.CreateFileAsync(imageId.Replace("/", "_") + "_scaled.png",CreationCollisionOption.ReplaceExisting);
-                using(IRandomAccessStream originalEarthStream = await (await earthPath).OpenAsync(FileAccessMode.Read))
+                var scaledEarth = await ApplicationData.Current.LocalFolder.CreateFileAsync(imageId.Replace("/", "_") + "_scaled.png", CreationCollisionOption.ReplaceExisting);
+                using (IRandomAccessStream originalEarthStream = await (await earthPath).OpenAsync(FileAccessMode.Read))
                 {
                     BitmapDecoder decoder = await BitmapDecoder.CreateAsync(originalEarthStream);
-                    using(var scaledImageStream=await scaledEarth.OpenAsync(FileAccessMode.ReadWrite))
+                    using (var scaledImageStream = await scaledEarth.OpenAsync(FileAccessMode.ReadWrite))
                     {
                         var scaledEncoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, scaledImageStream);
                         if (zoom < 100)
@@ -206,7 +210,7 @@ namespace DownloadServices
                 await encoder.FlushAsync();
             }
             Config.Instance.SetLastZoom(zoom);
-            if(Config.Instance.IsSavePicture)
+            if (Config.Instance.IsSavePicture)
             {
                 await SaveImageToImageFolder(saveFile);
             }
@@ -221,7 +225,8 @@ namespace DownloadServices
                 try
                 {
                     folder = await KnownFolders.PicturesLibrary.GetFolderAsync(savePictureFolderName);
-                }catch(Exception e)
+                }
+                catch (Exception e)
                 {
                     Trace.WriteLine(e);
                     await KnownFolders.PicturesLibrary.CreateFolderAsync(savePictureFolderName);

@@ -121,6 +121,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DownloaderHimawari8.cs" />
+    <Compile Include="Delegate\IProgressIndicator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\DownloadServices.rd.xml" />
   </ItemGroup>
