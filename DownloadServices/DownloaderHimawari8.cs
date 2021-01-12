@@ -23,7 +23,7 @@ namespace DownloadServices
     public class DownloaderHimawari8
     {
         private int ImageCount { get; set; }
-        private readonly string json_url = "http://himawari8.nict.go.jp/img/D531106/latest.json";
+        private readonly string json_url = "https://himawari8-dl.nict.go.jp/himawari8/img/FULL_24h/latest.json";
         private readonly uint size;
         private readonly string imageSource;
         private readonly int zoom;
@@ -36,11 +36,11 @@ namespace DownloadServices
             size = config.Size;
             if (config.SourceSelection == Config.SourceSelections.CDN)
             {
-                imageSource = "http://res.cloudinary.com/" + config.CloudName + "/image/fetch/http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
+                imageSource = "https://res.cloudinary.com/" + config.CloudName + "/image/fetch/https://himawari8-dl.nict.go.jp/himawari8/img/D531106";
             }
             else
             {
-                imageSource = "http://himawari8-dl.nict.go.jp/himawari8/img/D531106";
+                imageSource = "https://himawari8-dl.nict.go.jp/himawari8/img/D531106";
             }
             zoom = config.Zoom;
             lastZoom = config.LastZoom;
