@@ -4,21 +4,17 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Cache;
 using System.Net.Http;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Tools;
+using EarthLiveWinUI.config;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System.UserProfile;
-using Windows.UI.Core;
-using Windows.UI.Xaml.Media.Imaging;
 
-namespace DownloadServices
+namespace EarthLiveWinUI.service
 {
     public class DownloaderHimawari8
     {
@@ -160,7 +156,7 @@ namespace DownloadServices
                         await client.DownloadFileTaskAsync(url, destination.Path);
                         if (indicator != null)
                         {
-                            indicator(jj+1+ii*Convert.ToInt32(size) , Convert.ToInt32(size * size));
+                            indicator(jj + 1 + ii * Convert.ToInt32(size), Convert.ToInt32(size * size));
                         }
                     }
                 }
@@ -290,58 +286,5 @@ namespace DownloadServices
 
             return Canvas;
         }
-
-
-
-        //public void CleanCDN()
-        //{
-        //    Config.Load();
-        //    if (Config.api_key.Length == 0) return;
-        //    if (Config.api_secret.Length == 0) return;
-        //    try
-        //    {
-        //        HttpWebRequest request = WebRequest.Create("https://api.cloudinary.com/v1_1/" + Config.cloud_name + "/resources/image/fetch?prefix=http://himawari8-dl") as HttpWebRequest;
-        //        request.Method = "DELETE";
-        //        request.CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore);
-        //        string svcCredentials = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(Config.api_key + ":" + Config.api_secret));
-        //        request.Headers.Add("Authorization", "Basic " + svcCredentials);
-        //        HttpWebResponse response = null;
-        //        StreamReader reader = null;
-        //        string result = null;
-        //        for (int i = 0; i < 3; i++) // max 3 request each hour.
-        //        {
-        //            response = request.GetResponse() as HttpWebResponse;
-        //            if (response.StatusCode != HttpStatusCode.OK)
-        //            {
-        //                throw new Exception("[himawari8 clean CND cache connection error]");
-        //            }
-        //            if (!response.ContentType.Contains("application/json"))
-        //            {
-        //                throw new Exception("[himawari8 clean CND cache no json recieved. your Internet connection is hijacked]");
-        //            }
-        //            reader = new StreamReader(response.GetResponseStream());
-        //            result = reader.ReadToEnd();
-        //            if (result.Contains("\"error\""))
-        //            {
-        //                throw new Exception("[himawari8 clean CND cache request error]\n" + result);
-        //            }
-        //            if (result.Contains("\"partial\":false"))
-        //            {
-        //                Trace.WriteLine("[himawari8 clean CDN cache done]");
-        //                break; // end of Clean CDN
-        //            }
-        //            else
-        //            {
-        //                Trace.WriteLine("[himawari8 more images to delete]");
-        //            }
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Trace.WriteLine("[himawari8 error when delete CDN cache]");
-        //        Trace.WriteLine(e.Message);
-        //        return;
-        //    }
-        //}
     }
 }

@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Microsoft.UI.Xaml;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 using Windows.ApplicationModel;
 using Windows.Storage;
 
-namespace Tools
+namespace EarthLiveWinUI.config
 {
     public sealed class Config
     {
@@ -141,14 +141,14 @@ namespace Tools
         public bool IsOriginSource() => this.SourceSelection == SourceSelections.Orgin;
         public bool IsCDNSource() => this.SourceSelection == SourceSelections.CDN;
 
-        public void InitDefaultValues()
+        public void InitDefaultValues(Window window)
         {
             Version = GetAppVersion();
             Satellite = Staellites.Himawari8;
             ImageFolder = "";
             Interval = 30;
             SetwallPaper = false;
-            Size = ScreenHelper.GetDefaultSize();
+            Size = ScreenHelper.GetDefaultSize(window);
             Zoom = 100;
             CloudName = "";
             ApiKey = "";

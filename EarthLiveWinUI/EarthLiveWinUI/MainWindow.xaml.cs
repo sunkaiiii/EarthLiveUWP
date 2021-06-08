@@ -1,59 +1,54 @@
-﻿using DownloadServices;
-using Microsoft.Toolkit.Uwp.UI.Animations;
-using Newtonsoft.Json;
+﻿using CommunityToolkit.WinUI.UI.Animations;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
+using System.Numerics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
-using Tools;
-using Windows.ApplicationModel.Background;
+using EarthLiveWinUI.config;
+using EarthLiveWinUI.service;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using Windows.Graphics.Imaging;
 using Windows.Storage;
-using Windows.Storage.Streams;
-using Windows.System.UserProfile;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Navigation;
-using Tasks;
-using Windows.Storage.Pickers;
-using System.Globalization;
 
-// The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace EarthLiveUWP
+namespace EarthLiveWinUI
 {
     /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page
+    public sealed partial class MainWindow : Window
     {
         private CancellationTokenSource cancelToken = new System.Threading.CancellationTokenSource();
         private Config config = Config.Instance;
         DispatcherTimer dispatcherTimer;
-        private BackGroundTaskHelper taskHelper;
-        private bool downloadComplete=true;
+        private bool downloadComplete = true;
         NumberFormatInfo percentProvider;
-        public MainPage()
+
+        public MainWindow()
         {
             this.InitializeComponent();
-            taskHelper = BackGroundTaskHelper.Instance;
+            if (Config.Instance.IsFirstStart())
+            {
+                Config.Instance.InitDefaultValues(this);
+            }
             dispatcherTimer = new DispatcherTimer();
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
-            percentProvider=new NumberFormatInfo();
+            percentProvider = new NumberFormatInfo();
             percentProvider.PercentDecimalDigits = 2;
             percentProvider.CurrencyPositivePattern = 1;
             InitUI();
@@ -62,17 +57,17 @@ namespace EarthLiveUWP
             CDNRadioButton.Checked += CDNRadioButton_Checked;
             CloudName.TextChanged += CloudName_TextChanged;
             ChangeWidgetState();
-            var ignored = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await LoadPreviousImage());//load the cache image
-            var ignored2 = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => await GetEarthPicture()); //load the current image
+            this.DispatcherQueue.TryEnqueue(async () => await LoadPreviousImage()); //load the cache image
+            this.DispatcherQueue.TryEnqueue(async () => await GetEarthPicture()); //load the current image
         }
 
         private async Task LoadPreviousImage()
         {
             var previouseImageID = Config.Instance.LastImageID;
-            if(!String.IsNullOrEmpty(previouseImageID))
+            if (!String.IsNullOrEmpty(previouseImageID))
             {
                 var file = await new DownloaderHimawari8().GetSavedPureImageByIDAsync(previouseImageID);
-                if(file!=null)
+                if (file != null)
                 {
                     await SetImageViewAsync(file);
                 }
@@ -82,7 +77,7 @@ namespace EarthLiveUWP
         private async Task GetEarthPicture()
         {
             var cancelationToken = new CancellationTokenSource();
-            var file = await new DownloaderHimawari8().GetLiveEarthPictureForShowing(cancelationToken,(current,all)=>
+            var file = await new DownloaderHimawari8().GetLiveEarthPictureForShowing(cancelationToken, (current, all) =>
             {
                 var result = Convert.ToDouble(current) / all;
                 LoadingProgressText.Text = result.ToString("P", percentProvider);
@@ -100,33 +95,34 @@ namespace EarthLiveUWP
                 await bitmap.SetSourceAsync(randomAccessStream);
                 PannelBackground.Source = bitmap;
                 await Task.Delay(100); //wait for bitmap setting to scale picture
-                await ChangeImageScaleAsync((float)ZoomSlider.Value/100);
+                await ChangeImageScaleAsync((float)ZoomSlider.Value / 100);
             }
         }
 
         private async void button_start_Click(object sender, RoutedEventArgs e)
         {
-            if(!taskHelper.IsTaskRunning)
-            {
+            //if (!taskHelper.IsTaskRunning)
+            //{
                 await StartProcess();
-            }
-            else
-            {
-                StopProcess();
-            }
+            //}
+            //else
+            //{
+            //    StopProcess();
+            //}
         }
+
         private void ChangeWidgetState()
         {
-            button_start.Content = taskHelper.IsTaskRunning ? "Stop" : "Start";
+            //button_start.Content = taskHelper.IsTaskRunning ? "Stop" : "Start";
             button_start.Visibility = downloadComplete ? Visibility.Visible : Visibility.Collapsed;
             loadingProcessRing.Visibility = button_start.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private async Task StartProcess()
         {
-            if (!taskHelper.IsTaskRunning)
-            {
-                taskHelper.RegistBackGroundTask();
+            //if (!taskHelper.IsTaskRunning)
+            //{
+                //taskHelper.RegistBackGroundTask();
                 cancelToken = new CancellationTokenSource();
                 Task downloadImage = new DownloaderHimawari8().UpdateImage(cancelToken);
                 downloadComplete = false;
@@ -134,12 +130,12 @@ namespace EarthLiveUWP
                 await downloadImage;
                 downloadComplete = true;
                 ChangeWidgetState();
-            }
+            //}
         }
 
         private void StopProcess()
         {
-            taskHelper.UnregistBackgroundTask();
+            //taskHelper.UnregistBackgroundTask();
             ChangeWidgetState();
             if (cancelToken != null && !cancelToken.IsCancellationRequested)
             {
@@ -160,6 +156,7 @@ namespace EarthLiveUWP
             CloudName.Text = config.CloudName;
             LoadingProgressText.Text = 0.0.ToString("P", percentProvider);
         }
+
         private async void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
             if (dispatcherTimer.IsEnabled)
@@ -195,20 +192,21 @@ namespace EarthLiveUWP
         {
             config.SetCloudName(((TextBox)sender).Text);
         }
-
         private async Task ChangeImageScaleAsync(float scale)
         {
             (float centerX, float centerY) centerXY = GetCenterXY();
-            await PannelBackground.Scale(scaleX: scale, scaleY: scale, duration: 400, centerX: centerXY.centerX, centerY: centerXY.centerY).StartAsync();
+            PannelBackground.Scale = new Vector3(scale);
+            //await PannelBackground.Scale(scaleX: scale, scaleY: scale, duration: 400, centerX: centerXY.centerX, centerY: centerXY.centerY).StartAsync();
         }
 
         private void ChangeImageScale(float scale)
         {
             (float centerX, float centerY) centerXY = GetCenterXY();
-            PannelBackground.Scale(scaleX: scale, scaleY: scale, duration: 400, centerX: centerXY.centerX, centerY: centerXY.centerY).Start();
+            PannelBackground.Scale = new Vector3(scale);
+            //PannelBackground.Scale(scaleX: scale, scaleY: scale, duration: 400, centerX: centerXY.centerX, centerY: centerXY.centerY).Start();
         }
 
-        private (float,float) GetCenterXY()
+        private (float, float) GetCenterXY()
         {
             float centerX = (float)PannelBackground.ActualWidth / 2;
             float centerY = (float)PannelBackground.ActualHeight / 2;
@@ -224,5 +222,6 @@ namespace EarthLiveUWP
         {
             config.CancelSaveImage();
         }
+
     }
 }

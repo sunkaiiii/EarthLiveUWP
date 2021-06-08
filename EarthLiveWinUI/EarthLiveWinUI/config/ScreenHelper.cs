@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.Display;
-using Windows.UI.ViewManagement;
 
-namespace Tools
+namespace EarthLiveWinUI.config
 {
-    public static class ScreenHelper
+    class ScreenHelper
     {
+        private static ScreenResolution  cacheResolution = new ScreenResolution(1366, 768);
         public struct ScreenResolution
         {
             public uint Width { get; }
@@ -39,22 +39,27 @@ namespace Tools
 
             private uint CalculateArea(uint pixel, uint imagePixel)
             {
-                int result = (Convert.ToInt32(pixel) - Convert.ToInt32(imagePixel))/2; //in case the uint overflow
-                return result>=0?Convert.ToUInt32(result):0;
+                int result = (Convert.ToInt32(pixel) - Convert.ToInt32(imagePixel)) / 2; //in case the uint overflow
+                return result >= 0 ? Convert.ToUInt32(result) : 0;
             }
         }
+        public static ScreenResolution GetScreenResolution(Microsoft.UI.Xaml.Window window)
+        {
+            //var displayInformation = DisplayInformation.GetForCurrentView();
+            cacheResolution = new ScreenResolution(window.Bounds.Width,window.Bounds.Height);
+            return cacheResolution;
+        }
+
         public static ScreenResolution GetScreenResolution()
         {
-            var displayInformation = DisplayInformation.GetForCurrentView();
-            return new ScreenResolution(displayInformation.ScreenWidthInRawPixels, displayInformation.ScreenHeightInRawPixels);
+            return cacheResolution;
         }
-        public static uint GetDefaultSize()
+        public static uint GetDefaultSize(Microsoft.UI.Xaml.Window window)
         {
-            var screenResolution = GetScreenResolution();
-            double widthSize =  Math.Round(Math.Sqrt(screenResolution.Width/550.0));
+            var screenResolution = GetScreenResolution(window);
+            double widthSize = Math.Round(Math.Sqrt(screenResolution.Width / 550.0));
             double heightSize = Math.Round(Math.Sqrt(screenResolution.Height / 550.0));
             return Convert.ToUInt32(Math.Pow(2, Math.Min(widthSize, heightSize)));
         }
-
     }
 }

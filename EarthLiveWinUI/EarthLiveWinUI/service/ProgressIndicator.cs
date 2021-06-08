@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DownloadServices
+namespace EarthLiveWinUI.service
 {
     public delegate void ProgressIndicator(int current, int all);
 }
